@@ -1,0 +1,25 @@
+# Vocabulary for Catalog::DescriptionParser. Versioned: changing it changes hints.
+makes:
+  - ACURA
+  - BUICK
+  - CADILLAC
+  - CHEVROLET
+  - CHRYSLER
+  - DODGE
+  - FORD
+  - GMC
+  - HONDA
+  - JEEP
+  - LINCOLN
+  - MAZDA
+  - NISSAN
+  - RAM
+  - TOYOTA
+  - VOLKSWAGEN
+# Free-text words that are never engine codes.
+note_words:
+  - INC
+  - CON
+  - RESORTE
+  - C/S
+  - RAN

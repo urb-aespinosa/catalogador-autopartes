@@ -1,7 +1,7 @@
 # Diseño — Catalogador de autopartes
 
 - **Fecha:** 2026-11-05
-- **Estado:** borrador para revisión del desarrollador
+- **Estado:** aprobado por el desarrollador el 2026-11-05 a las 16:17 (CDMX)
 - **Insumos:** `docs/DESIGN_BRIEF.md`, `docs/DECISIONS.md` (D1–D9), `docs/input/*.xlsx` y el spike de fuentes del 2026-11-05.
 - **Cómo leer las marcas de este documento:**
   - **[decisión del desarrollador]**: la decidió Antonio y no se cambia sin preguntarle.
@@ -113,10 +113,12 @@ El evaluador califica sobre todo el *approach*, las decisiones y el tiempo. Tien
 - Las hojas del ejemplo se mantienen **sin columnas extra**.
 - Hoja **Fuentes**: `Referencia | Tipo de dato | Origen | URL | Valor original`.
   - Tipo de dato: `aplicación` / `intercambio` / `atributo`.
-  - Origen: `oficial` / `vía intercambio de {número} ({marca})` / `verificación NHTSA vPIC` (§5.7).
+  - Origen: `oficial` / `vía intercambio de {número} ({marca})` / `verificación NHTSA vPIC` (§5.7) / `número de parte` (D10, §5.4).
   - Valor original: el texto de la fuente antes de convertir o traducir, por ejemplo `3.880 IN`.
 - Hoja **Validación**: `Referencia | Campo | Valor ERP | Valor fuente | URL | Estado`.
-  - Estado: `coincide` / `difiere` / `no encontrado` / `sin traducción`.
+  - Estado: `coincide` / `difiere` / `no encontrado` / `sin traducción` / `error de fuente`.
+    - `no encontrado`: la fuente respondió y no tiene la pieza o el dato.
+    - `error de fuente`: la fuente no respondió bien (timeout, error de red, respuesta HTTP inesperada). Lleva el detalle del error. Es distinto de `no encontrado` (§6.7).
 - Una pieza sin fuente aparece en tres hojas:
   - `Origen`;
   - `Catálogo`, con referencia, marca y producto normalizados, y el resto vacío;
@@ -228,7 +230,11 @@ Todas las URLs y respuestas se observaron el 2026-11-05. Las copias del spike es
   - Safety no tiene búsqueda por número propio. Su búsqueda por intercambio solo acepta números de la competencia, y no encontró `83-301`.
   - Estrategia: usar la armadora de las pistas del ERP para elegir los `MakeCode` candidatos, recorrer **todos** sus motores y quedarse con los que listan el número base.
   - Todas las respuestas quedan en caché **[criterio de diseño]**.
-- **Número de parte:** el ERP dice `SP26-329R/L+20` y Safety lista `SP26-329R/L`. El sufijo `+20` es la sobremedida (0.020"). Se busca por el número base y la sobremedida se registra como atributo **[criterio de diseño]**.
+- **Número de parte:** el ERP dice `SP26-329R/L+20` y Safety lista `SP26-329R/L`. El sufijo `+20` es la sobremedida (0.020"). Se busca por el número base.
+- **Sobremedida — excepción explícita a D1 (D10)** **[decisión del desarrollador]**:
+  - La sobremedida se toma **del número de parte** (`+20` = 0.020"), no de la descripción.
+  - El número de parte es la identidad de la pieza, y el ejemplo hace lo mismo con `44338+20`.
+  - Se registra como atributo. En Fuentes, su origen es `número de parte`.
 - **Atributos:** esta fuente no publica medidas de pistón. La pieza tendrá pocos atributos o ninguno; es lo esperado.
 - **Años:** vienen en formato `AA-AA` con dos dígitos. Las aplicaciones ya vienen por modelo, así que D8 no aplica aquí.
 
@@ -331,6 +337,7 @@ Por cada pista que el parser extrajo del ERP se genera una fila:
 - Además se registran estas filas:
   - pieza sin fuente → `no encontrado`;
   - término sin diccionario → `sin traducción`;
+  - solicitud HTTP fallida → `error de fuente`, con detalle (§6.7);
   - combinación modelo-año no confirmada por vPIC → `no encontrado`.
 - Las discrepancias **nunca** cambian los datos del catálogo.
 
@@ -371,10 +378,14 @@ El orden de las hojas es: `Origen`, `Métricas`, `Aplicaciones`, `Intercambios`,
 ### 6.7 Reglas de ejecución de red **[decisión del desarrollador]**
 - **Timeout:** cada solicitud HTTP tiene un timeout fijo de pocos segundos, **15 s** para conexión y lectura. Es un valor de configuración, no se ajusta solo.
 - **Si una solicitud falla** (timeout, error de red, respuesta 4xx/5xx inesperada):
-  - la pieza se marca en Validación con el campo `Fuente`, la URL y el estado `no encontrado`, y un detalle del error;
+  - la pieza se marca en Validación con el campo `Fuente`, la URL y el estado **`error de fuente`**, con el detalle del error. No se usa `no encontrado`, que significa que la fuente respondió y no tiene la pieza;
   - la corrida **continúa** con las demás piezas, y el Excel se genera igual;
   - la pieza queda en estado `error` en la pantalla.
 - **Reintentos:** sin reintentos automáticos dentro de una corrida **[criterio de diseño]**.
+- **Cortesía de red** **[decisión del desarrollador]**:
+  - Máximo **una solicitud por segundo por sitio**, contado por host. Aplica también cuando varios jobs corren en paralelo.
+  - **User-Agent** que identifica la app con el nombre del proyecto, sin datos personales. Por ejemplo: `catalogador-autopartes/1.0 (prueba tecnica)`.
+  - Las respuestas en caché no cuentan, porque no generan solicitudes.
 - **Caché y fallas:** una respuesta fallida **no** se guarda como snapshot, así que la siguiente corrida vuelve a intentarlo. El determinismo se garantiza cuando todas las fuentes ya están en caché. Si una corrida tuvo fallas de red, la pantalla y la hoja Validación lo dicen explícitamente **[criterio de diseño]**.
 
 ## 7. Alcance — D6 **[decisión del desarrollador]**
@@ -434,6 +445,14 @@ El orden de las hojas es: `Origen`, `Métricas`, `Aplicaciones`, `Intercambios`,
 3. **Nombres de modelo en vPIC** (§5.7). Los nombres del mercado mexicano o las variantes de Elgin pueden no existir en vPIC y quedar fuera. Mitigación: registrar el hallazgo y revisar con el desarrollador si hace falta una tabla de alias.
 4. **Intercambios de FRACO:** el ejemplo reporta intercambios para FSX-5840299 (TF Victor JC-47-1 y Quebec QJC-36-1MLO). Hay que confirmar si la ficha PDF los publica. Si no, se aplica D9.
 5. **Layout del PDF de Fraco:** reconstruir la tabla por posición puede ser frágil. Mitigación: `-bbox-layout` y tests con dos fichas (FSX-5840301 y FSX-5840299).
+
+**Preguntas del revisor pendientes de respuesta del desarrollador.** Mientras no haya respuesta, el plan asume el default indicado y lo implementa de forma que cambiarlo sea barato:
+
+6. **Determinismo entre máquinas.** La caché vive en SQLite local, que no se sube al repo. *Default:* subir al repo las descargas usadas para el Excel entregado y cargarlas en `bin/setup`.
+7. **Alcance de la confirmación vPIC.** vPIC confirma modelo + año, no motor. *Default:* aceptar modelo + año y documentarlo explícitamente.
+8. **Equivalencia RM-152 ↔ Melling M152 y qué se trae vía intercambio.** Ninguna fuente oficial dice explícitamente que RM-152 = M152. *Default:* solo se traen aplicaciones. Mientras no haya fuente que confirme la equivalencia, el complemento no se activa y queda en Validación.
+9. **TK1283-1 si fallan Cloyes, Dayco y SA Gear.** *Default:* se trata como pieza sin fuente (Catálogo con el producto según el grupo del ERP, más su explicación en Validación).
+10. **Armadora en Safety (Chevrolet vs. GMC).** *Default:* `Fabricante` queda como lo da Safety, sin usar vPIC fuera del alcance de D8.
 
 ## 10. A criterio del constructor
 - Nombres de clases, tablas y rutas; la forma exacta de la interfaz de adaptadores.

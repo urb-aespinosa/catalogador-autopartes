@@ -127,3 +127,20 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 - Si no se confirma, va a Validación como "no encontrado".
 
 **Por qué:** los números del ERP son pistas valiosas para buscar, pero pueden tener errores de captura. Solo se publican los que una fuente oficial respalda.
+
+## 2026-11-05 16:17 — D10. Sobremedida desde el número de parte (excepción explícita a D1)
+
+**Decisión**
+- La **sobremedida** de una pieza se toma **del número de parte**, no de la descripción del ERP. Por ejemplo, en `SP26-329R/L+20`, el sufijo `+20` significa 0.020".
+- Se registra como atributo. En la hoja Fuentes, su origen es **"número de parte"**.
+
+**Por qué:** el número de parte es la identidad de la pieza, no una descripción libre. El ejemplo del evaluador hace lo mismo con `44338+20`.
+
+## 2026-11-05 16:17 — Spec de diseño aprobado
+
+- `docs/superpowers/specs/2026-11-05-catalogador-design.md` queda aprobado.
+- **Ajustes finales:**
+  - estado `error de fuente` en Validación, distinto de `no encontrado`;
+  - D10;
+  - cortesía de red: máximo 1 solicitud por segundo por sitio y un User-Agent con el nombre del proyecto.
+- **Preguntas del revisor sin respuesta todavía:** quedan en §9 (puntos 6–10), cada una con el default que asume el plan.

@@ -3,7 +3,8 @@ module Sources
   # A manufacturer without an entry has no official source (e.g. REVO).
   module Registry
     ADAPTERS = {
-      "ELGIN" => "Sources::Elgin"
+      "ELGIN" => "Sources::Elgin",
+      "FRACO" => "Sources::Fraco"
     }.freeze
 
     def self.for(manufacturer)

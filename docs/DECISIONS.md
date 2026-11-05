@@ -211,3 +211,28 @@ Time-box de desarrollo de 30 minutos (D8, paso 1). Usé unos 5.
 - Ninguna vista publica años por modelo.
 
 **Consecuencia:** las aplicaciones de Elgin se expanden con la verificación de NHTSA vPIC (D8, paso 2, Tarea 6).
+
+## 2026-11-05 17:14 — Hallazgo (Tarea 6): nombres de modelo en vPIC vs. Elgin — regla de comparación
+
+**Contexto**
+- vPIC usa nombres base: `Silverado`, `Express`.
+- Elgin usa variantes: `Silverado 1500`, `Silverado 2500 HD Classic`, `Express 2500`, `Express Pasajeros`.
+- Con igualdad exacta, la verificación habría descartado casi todas las Silverado y Express.
+
+**Decisión del ejecutor (por revisar con el desarrollador)**
+- Un modelo de la fuente se confirma si el nombre de vPIC coincide con **sus primeras palabras completas**.
+- Ejemplos:
+  - `Silverado` confirma `Silverado 1500 HD Classic`;
+  - `Express` confirma `Express Pasajeros`;
+  - `Express` **no** confirma `Expressway`.
+- Es una regla fija y determinista, no una tabla de alias.
+- Los modelos sin equivalente en vPIC van a Validación. Por ejemplo, `Cheyenne` y `Sonora`, nombres del mercado mexicano.
+- Los años no confirmados se reportan **una fila de Validación por aplicación**, con rangos compactos (`Chevrolet Avalanche 2008-2020`).
+
+**Costo si no se acepta:** se cambia un solo método (`Catalog::Vpic.same_model?`) a igualdad exacta, y el catálogo pierde muchas aplicaciones.
+
+## 2026-11-05 17:14 — Hallazgo (Tarea 7): las fichas de Fraco no publican intercambios
+
+- Revisé el texto de las fichas FSX-5840299 y FSX-5840301 buscando números de otras marcas: `JC-47-1`, `QJC`, `TF Victor`, `Quebec`, `FS-0…`, `JC20`.
+- **No aparecen.** Las fichas solo listan componentes propios de Fraco (`HGX-…`, `VSX-…`, `OSX-…`).
+- **Consecuencia (D9):** los números de intercambio de la descripción del ERP de FSX-5840301 (`QJC20G`, `FS-001225`, `JC20`) no tienen confirmación oficial. Van a Validación como "no encontrado" y no entran a la hoja Intercambios.

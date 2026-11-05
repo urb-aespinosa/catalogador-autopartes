@@ -85,4 +85,5 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 
 **Si alcanza**
 - Adaptador de Cloyes con navegador automatizado.
-- Las horas trabajadas se registran por sesión en la tabla "Registro de horas" al inicio de este archivo.
+
+**Nota:** las horas trabajadas se registran por sesión en la tabla "Registro de horas" al inicio de este archivo.

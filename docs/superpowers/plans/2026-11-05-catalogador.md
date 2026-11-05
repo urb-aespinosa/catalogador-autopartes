@@ -1078,6 +1078,9 @@ end
   - `FORCE_REFRESH`;
   - el approach en una página, apoyándote en la sección 0 del spec;
   - limitaciones conocidas: submodelos (D3); vPIC confirma modelo + año, no motor (D11); estado de RM-152 y TK1283-1.
+  - por qué la hoja **Intercambios** sale con pocas filas: las equivalencias no tienen confirmación oficial (D9). Cada número aparece en Validación con su motivo (D14).
+  - alias de capacidad para vPIC: qué son y que en el Excel se conserva el nombre de Elgin (D14).
+  - `poppler-utils` también en el `Dockerfile` (D14; pendiente menor del revisor).
   - Commit.
 - [ ] **Step 4: Sesión de verificación** (dedicada, antes del lunes 9 en la mañana):
   1. Clonar limpio en un directorio temporal, seguir el README al pie de la letra y anotar cualquier paso faltante.

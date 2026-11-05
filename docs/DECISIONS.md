@@ -260,10 +260,33 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 - Ninguna fuente oficial conocida menciona `TK1283-1`. La equivalencia solo aparece en la descripción del ERP y en un sitio de terceros (finditparts).
 - **Resultado:** sin confirmación oficial. TK1283-1 queda como pieza sin fuente, con producto "KIT DE DISTRIBUCIÓN" (D11).
 
-**Pregunta abierta para el desarrollador:** no usé las credenciales incrustadas de Melling (OAuth) ni de Cloyes (Algolia). Usarlas sería reproducir lo que hace un navegador, pero con llaves extraídas de su código, y eso merece una decisión explícita. Aun usándolas, es poco probable que esos catálogos mencionen piezas de Rexite o de REVO.
+**Pregunta abierta para el desarrollador** (resuelta en D14): no usé las credenciales incrustadas de Melling (OAuth) ni de Cloyes (Algolia). Usarlas sería reproducir lo que hace un navegador, pero con llaves extraídas de su código, y eso merece una decisión explícita. Aun usándolas, es poco probable que esos catálogos mencionen piezas de Rexite o de REVO.
 
 ## 2026-11-05 17:14 — Hallazgo (Tarea 7): las fichas de Fraco no publican intercambios
 
 - Revisé el texto de las fichas FSX-5840299 y FSX-5840301 buscando números de otras marcas: `JC-47-1`, `QJC`, `TF Victor`, `Quebec`, `FS-0…`, `JC20`.
 - **No aparecen.** Las fichas solo listan componentes propios de Fraco (`HGX-…`, `VSX-…`, `OSX-…`).
 - **Consecuencia (D9):** los números de intercambio de la descripción del ERP de FSX-5840301 (`QJC20G`, `FS-001225`, `JC20`) no tienen confirmación oficial. Van a Validación como "no encontrado" y no entran a la hoja Intercambios.
+
+## 2026-11-05 17:46 — D14. Alias de capacidad para vPIC, credenciales incrustadas y README
+
+**1. Nombres de modelo en vPIC (spec §9.3)**
+- Se agrega una **tabla de alias en YAML, explícita y revisada por el desarrollador**, solo para **sufijos de capacidad**: `1500`, `2500`, `3500` y `HD`. Ejemplos:
+  - `Silverado 1500` → `Silverado`
+  - `Express 2500` → `Express`
+  - `Suburban 2500` → `Suburban`
+- El alias **solo se usa para consultar vPIC**. En el Excel se conserva el nombre de Elgin.
+- **Sin alias** para:
+  - las variantes `Classic`;
+  - `Cheyenne`, `Sonora` y `Express Pasajeros`.
+
+  Esos nombres siguen yendo a Validación.
+- La tabla se revisa antes del commit.
+
+**2. Credenciales incrustadas de Melling (OAuth) y Cloyes (Algolia): no se usan.**
+- Sería usar sus APIs sin autorización.
+- Las equivalencias RM-152 = M152 y TK1283-1 = 9-0511S quedan sin confirmación oficial (hallazgo de 17:32). Los complementos no se activan.
+
+**3. README (Tarea 16)**
+- Explicar que la hoja Intercambios sale con pocas filas porque las equivalencias no tienen confirmación oficial (D9), y que cada número aparece en Validación con su motivo.
+- Documentar `poppler` (`pdftotext`) en el README y en el `Dockerfile`. Era un pendiente menor del revisor.

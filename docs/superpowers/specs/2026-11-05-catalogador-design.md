@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-11-05
 - **Estado:** aprobado por el desarrollador el 2026-11-05 a las 16:17 (CDMX)
-- **Insumos:** `docs/DESIGN_BRIEF.md`, `docs/DECISIONS.md` (D1–D9), `docs/input/*.xlsx` y el spike de fuentes del 2026-11-05.
+- **Insumos:** `docs/DESIGN_BRIEF.md`, `docs/DECISIONS.md` (D1–D11), `docs/input/*.xlsx` y el spike de fuentes del 2026-11-05.
 - **Cómo leer las marcas de este documento:**
   - **[decisión del desarrollador]**: la decidió Antonio y no se cambia sin preguntarle.
   - **[criterio de diseño]**: decisión razonable tomada al diseñar; puede ajustarse.
@@ -145,7 +145,7 @@ El evaluador califica sobre todo el *approach*, las decisiones y el tiempo. Tien
 | PUNTERIAS | HL-7025S | JUEGO DE PUNTERÍAS DE MOTOR | COMPONENTES DEL TREN DE VÁLVULAS **[criterio de diseño]** | Juego de punterías de motor para transmitir el movimiento del árbol de levas a las válvulas. |
 | BOMBA DE ACEITE | RM-152 | BOMBA DE ACEITE DEL MOTOR | BOMBAS | Bomba de aceite del motor para impulsar y distribuir el aceite del motor. |
 | PISTONES | SP26-329R/L+20 | PISTÓN DE MOTOR | COMPONENTES DEL BLOQUE DE CILINDROS | El Pistón de motor forma parte del conjunto móvil del motor. |
-| KIT DE DISTRIBUCION | TK1283-1 | KIT DE CADENA DE TIEMPO | COMPONENTES DEL TREN DE VÁLVULAS | Kit de cadena de tiempo para sincronizar el árbol de levas con el cigüeñal. |
+| KIT DE DISTRIBUCION | TK1283-1 | KIT DE CADENA DE TIEMPO **solo si una fuente oficial confirma la equivalencia con Cloyes 9-0511S**; si no, **KIT DE DISTRIBUCIÓN** (D11) | COMPONENTES DEL TREN DE VÁLVULAS | Kit de cadena de tiempo para sincronizar el árbol de levas con el cigüeñal. *(Para KIT DE DISTRIBUCIÓN, la frase se redacta en el plan y la revisa el desarrollador.)* |
 
 Para las cinco piezas, `Categoría` = `Vehículo ligero` y `Sistema` = `MOTOR`.
 
@@ -237,6 +237,11 @@ Todas las URLs y respuestas se observaron el 2026-11-05. Las copias del spike es
   - Se registra como atributo. En Fuentes, su origen es `número de parte`.
 - **Atributos:** esta fuente no publica medidas de pistón. La pieza tendrá pocos atributos o ninguno; es lo esperado.
 - **Años:** vienen en formato `AA-AA` con dos dígitos. Las aplicaciones ya vienen por modelo, así que D8 no aplica aquí.
+- **Fabricante real (D11):**
+  - Safety agrupa por "GM Trucks" y no da la marca de cada modelo.
+  - La marca se identifica con vPIC `GetModelsForMake` (§5.7): por ejemplo, Silverado → Chevrolet y Sierra → GMC.
+  - Si un modelo no se encuentra en vPIC, **no se genera la aplicación** y va a Validación como `no encontrado`.
+  - `Fabricante` nunca queda vacío ni con "GM".
 
 ### 5.5 REVO — sin fuente oficial
 - `revo.com.mx` es un dominio estacionado. La marca solo aparece en marketplaces (Amazon, Walmart, eBay), y los marketplaces no se usan.
@@ -245,20 +250,34 @@ Todas las URLs y respuestas se observaron el 2026-11-05. Las copias del spike es
   - SA Gear `SA-76260`.
   - Dayco `KTC1372`.
 - Cloyes confirma que 9-0511S es para la cadena de tiempo del Pentastar 3.2/3.6L DOHC V6, en una página técnica de cloyes.com.
+- **La equivalencia TK1283-1 = 9-0511S no está confirmada oficialmente** (D11). Salió de la descripción del ERP y de un sitio de terceros. Para activar el complemento hace falta una fuente oficial que la confirme.
 - **El buscador de piezas de Cloyes (`/part-finder`) solo funciona con JavaScript.** Ver §7: intento acotado de 30 minutos.
+- **Sin confirmación oficial:**
+  - TK1283-1 es pieza sin fuente;
+  - su producto en Catálogo es **KIT DE DISTRIBUCIÓN** (grupo del ERP);
+  - en Validación queda la explicación.
 
 ### 5.6 Fuentes de intercambio
+- **Regla general (D11):**
+  - Un complemento vía intercambio solo se activa si una **fuente oficial confirma la equivalencia** entre la pieza y la pieza de intercambio. Sirven la ficha de la pieza o el catálogo oficial de la otra marca.
+  - Vía intercambio solo se traen **aplicaciones**, nunca atributos.
+  - La pieza de intercambio entra a la hoja Intercambios solo con esa confirmación oficial (D9).
 - **Melling M152** (complemento de RM-152, **núcleo**): **no se verificó en el spike.**
-  - El primer paso del adaptador es localizar el catálogo oficial de Melling y confirmar que se puede leer sin navegador.
-  - Si no se puede, RM-152 queda solo con la fila oficial de Rexite y se registra en Validación.
-  - En ese caso hay que avisar al desarrollador, porque D6 considera este complemento la demostración de la regla de intercambios.
-- **Cloyes, Dayco y SA Gear** (para TK1283-1): intento acotado, §7.
+  - Hay un intento de desarrollo de 30 minutos para encontrar una fuente oficial que confirme RM-152 = M152 (ficha de Rexite o catálogo de Melling) y para confirmar que el catálogo de Melling se puede leer sin navegador.
+  - Si no aparece, el complemento **no se activa**: RM-152 queda solo con la fila oficial de Rexite y la equivalencia va a Validación.
+  - Hay que avisar al desarrollador, porque D6 considera este complemento la demostración de la regla de intercambios.
+- **Cloyes, Dayco y SA Gear** (para TK1283-1): intento acotado (§7), con la misma exigencia de confirmación oficial de la equivalencia.
 
-### 5.7 NHTSA vPIC — verificación de modelo-año (D8)
-- **Qué es:** la API oficial y gratuita de la NHTSA, sin llave. Ejemplo: `GET https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/{armadora}/modelyear/{año}?format=json`.
+### 5.7 NHTSA vPIC — verificación de modelo-año (D8) e identificación de marca (D11)
+- **Qué es:** la API oficial y gratuita de la NHTSA, sin llave.
 - **Caché:** sus respuestas se guardan en `SourceSnapshot` como cualquier otra fuente, con la misma regla de no volver a descargar.
-- **Cuándo se usa:** solo para aplicaciones de mercado USA de fuentes que dan años por motor (§4.7).
-- **No es fuente de aplicaciones:** solo confirma combinaciones.
+- **Dos usos, y solo estos dos:**
+  1. **Verificación modelo-año (D8):** `GET https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/{armadora}/modelyear/{año}?format=json`. Se usa solo para aplicaciones de mercado USA de fuentes que dan años por motor (§4.7). **vPIC confirma modelo + año, no motor** (D11): el motor lo afirma la fuente. Esto se documenta en el README.
+  2. **Identificación de marca (D11):** `GET https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/{armadora}?format=json`. Se usa cuando la fuente agrupa varias marcas (Safety "GM Trucks"): el modelo se busca en las marcas candidatas del grupo y se toma la marca donde aparece. Las marcas candidatas de cada grupo se definen en un YAML **[criterio de diseño]**; por ejemplo `GMT` → Chevrolet, GMC.
+     - Si el modelo aparece en **una sola** marca, se usa esa marca.
+     - Si no aparece en ninguna, o aparece en más de una, **no se genera la aplicación** y va a Validación como `no encontrado` (campo `Fabricante`).
+     - El caso "aparece en más de una" es **[criterio de diseño]**: no se adivina.
+- **No es fuente de aplicaciones:** solo confirma combinaciones o identifica la marca.
   - La aplicación sigue siendo de Elgin, con la URL de Elgin y `Mercado` = `USA`.
   - La URL de vPIC que confirma cada combinación se agrega en Fuentes con el origen `verificación NHTSA vPIC` **[criterio de diseño]**.
 - **Comparación de nombres de modelo:** se normalizan mayúsculas, espacios y guiones **[criterio de diseño]**.
@@ -318,6 +337,7 @@ También debe existir una tarea `bin/rails catalog:run[ruta.xlsx]` que ejecute e
 - `Run`: archivo subido, estado y archivo generado.
 - `SourceItem`: una fila del origen (las 7 columnas tal cual), su estado de procesamiento y su producto normalizado.
 - `SourceSnapshot`: `url` (única), `body`, `content_type`, `sha256` y `fetched_at`. Es **global, no por corrida**: es la caché.
+  - **Snapshots en el repo (D11):** las copias usadas para el Excel entregado se exportan a archivos versionados en el repo, y `bin/setup` las carga en la base. Así el resultado es idéntico en cualquier máquina.
 - `CatalogApplication`, `CatalogInterchange` y `CatalogAttribute`: las filas finales. Cada una guarda su `SourceItem`, URL, origen (`oficial` o vía intercambio) y valor original.
 - `ValidationEntry`: las filas de Validación.
 
@@ -446,13 +466,13 @@ El orden de las hojas es: `Origen`, `Métricas`, `Aplicaciones`, `Intercambios`,
 4. **Intercambios de FRACO:** el ejemplo reporta intercambios para FSX-5840299 (TF Victor JC-47-1 y Quebec QJC-36-1MLO). Hay que confirmar si la ficha PDF los publica. Si no, se aplica D9.
 5. **Layout del PDF de Fraco:** reconstruir la tabla por posición puede ser frágil. Mitigación: `-bbox-layout` y tests con dos fichas (FSX-5840301 y FSX-5840299).
 
-**Preguntas del revisor pendientes de respuesta del desarrollador.** Mientras no haya respuesta, el plan asume el default indicado y lo implementa de forma que cambiarlo sea barato:
+**Preguntas del revisor: resueltas en D11** (2026-11-05 16:24):
 
-6. **Determinismo entre máquinas.** La caché vive en SQLite local, que no se sube al repo. *Default:* subir al repo las descargas usadas para el Excel entregado y cargarlas en `bin/setup`.
-7. **Alcance de la confirmación vPIC.** vPIC confirma modelo + año, no motor. *Default:* aceptar modelo + año y documentarlo explícitamente.
-8. **Equivalencia RM-152 ↔ Melling M152 y qué se trae vía intercambio.** Ninguna fuente oficial dice explícitamente que RM-152 = M152. *Default:* solo se traen aplicaciones. Mientras no haya fuente que confirme la equivalencia, el complemento no se activa y queda en Validación.
-9. **TK1283-1 si fallan Cloyes, Dayco y SA Gear.** *Default:* se trata como pieza sin fuente (Catálogo con el producto según el grupo del ERP, más su explicación en Validación).
-10. **Armadora en Safety (Chevrolet vs. GMC).** *Default:* `Fabricante` queda como lo da Safety, sin usar vPIC fuera del alcance de D8.
+6. **Determinismo entre máquinas.** Las copias descargadas (snapshots) usadas para el Excel entregado se suben al repo y `bin/setup` las carga.
+7. **vPIC** confirma modelo + año, no motor. Se documenta en el README.
+8. **Equivalencias de intercambio.** Requieren confirmación oficial, tanto RM-152 = M152 como TK1283-1 = 9-0511S. Hay un intento de 30 minutos de desarrollo para cada una. Sin confirmación, el complemento no se activa. Vía intercambio solo se traen aplicaciones (§5.6).
+9. **TK1283-1 sin fuente.** Su producto es "KIT DE DISTRIBUCIÓN" (§4.4, §5.5).
+10. **Fabricante en Safety.** Se identifica con vPIC `GetModelsForMake`. Si no se identifica, no se genera la aplicación (§5.4, §5.7).
 
 ## 10. A criterio del constructor
 - Nombres de clases, tablas y rutas; la forma exacta de la interfaz de adaptadores.

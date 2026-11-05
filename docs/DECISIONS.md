@@ -144,3 +144,19 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
   - D10;
   - cortesía de red: máximo 1 solicitud por segundo por sitio y un User-Agent con el nombre del proyecto.
 - **Preguntas del revisor sin respuesta todavía:** quedan en §9 (puntos 6–10), cada una con el default que asume el plan.
+
+## 2026-11-05 16:24 — D11. Respuestas a las preguntas del revisor del spec
+
+1. **Determinismo entre máquinas — aceptado.** Las copias descargadas (snapshots) usadas para generar el Excel entregado se suben al repo, y `bin/setup` las carga. Así el resultado es idéntico en cualquier máquina.
+2. **Alcance de vPIC — aceptado.** vPIC confirma **modelo + año, no motor**. El motor lo afirma la fuente (Elgin). Esto se documenta explícitamente en el README y en la hoja Fuentes.
+3. **Equivalencias de intercambio — aceptado con matiz.**
+   - Intento de 30 minutos de desarrollo para encontrar una fuente oficial que confirme **RM-152 = Melling M152** (ficha de Rexite, catálogo de Melling).
+   - La misma exigencia aplica a **TK1283-1 = Cloyes 9-0511S**: esa equivalencia salió del ERP y de un sitio de terceros, así que también necesita confirmación oficial.
+   - Si no aparece una fuente oficial, el complemento **no se activa** y queda en Validación.
+   - Vía intercambio solo se traen **aplicaciones**. Los atributos de otra pieza no se copian.
+4. **Producto de TK1283-1 sin fuente — aceptado con ajuste.** Sin fuente confirmada, el producto en Catálogo es el del grupo del ERP, **"KIT DE DISTRIBUCIÓN"**, no "KIT DE CADENA DE TIEMPO", porque esa precisión depende de Cloyes. Esto matiza D5.
+5. **Marca real en Safety — no aceptado el default.**
+   - Safety agrupa por "GM Trucks" y no da la marca de cada modelo. La columna `Fabricante` debe ser la marca real.
+   - Se resuelve consultando en vPIC (`GetModelsForMake`, con caché) qué marca tiene cada modelo: Silverado → Chevrolet, Sierra → GMC.
+   - Esto es **identificación de marca**, no verificación de años (D8).
+   - Si un modelo no se encuentra en vPIC, va a Validación como "no encontrado" y no genera filas. `Fabricante` no puede quedar vacío ni con "GM".

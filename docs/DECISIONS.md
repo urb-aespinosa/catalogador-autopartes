@@ -195,3 +195,19 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 - **Frase de apertura aprobada para KIT DE DISTRIBUCIÓN:** "Kit de distribución para sincronizar el árbol de levas con el cigüeñal."
 
 **Ejecución:** modo directo en una rama nueva, explicando cada decisión. Habrá un revisor independiente al terminar las tareas 4, 9 y 14, y otro al final.
+
+## 2026-11-05 17:04 — Hallazgo (Tarea 5): Elgin no publica años por modelo
+
+Time-box de desarrollo de 30 minutos (D8, paso 1). Usé unos 5.
+
+**Qué se revisó**
+- `catalog.elginind.com/engine/chevrolet/`: el índice de motores por armadora tiene filtros de litros, CID y año.
+- El mismo índice con `?year=2008` y con `?year=2020`.
+- La página de motor de HL-7025S (6.0L 364 CID, 2007–20) y sus vistas `hx-get` (`/engine/part-spec/...`, que son especificaciones de pieza).
+
+**Resultado**
+- El filtro de año solo **selecciona motores** cuyo rango incluye ese año.
+- La columna de modelos es **idéntica** en 2008 y en 2020. Por ejemplo, lista Avalanche para 2020, aunque el Avalanche dejó de fabricarse en 2013.
+- Ninguna vista publica años por modelo.
+
+**Consecuencia:** las aplicaciones de Elgin se expanden con la verificación de NHTSA vPIC (D8, paso 2, Tarea 6).

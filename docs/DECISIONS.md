@@ -245,6 +245,23 @@ Time-box de desarrollo de 30 minutos (D8, paso 1). Usé unos 5.
 
 **Pendiente del desarrollador (spec §9.3):** decidir si se agrega una tabla de alias revisada, por ejemplo `Silverado 1500 → Silverado`. Mientras no se decida, rige la regla del spec.
 
+## 2026-11-05 17:32 — Hallazgo (Tarea 13): no hay confirmación oficial de las equivalencias de intercambio
+
+Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos en total.
+
+**RM-152 = Melling M152**
+- **Rexite** vende `RM-152` y también `Bomba Melling M-152` (`rexite.net/producto/bomba-de-aceite-m-152-nissan/`), con la misma aplicación (280ZX 81–82). Pero ninguna de las dos fichas dice que sean equivalentes: no hay descripción, etiqueta ni campo de intercambio. Que los números se parezcan y las aplicaciones coincidan es una inferencia, no una confirmación.
+- **Melling** (`melling.com`) remite a `melling.mypartfinder.com`, una aplicación JavaScript. Su API (`api.mypartfinder.com`) pide un token OAuth con credenciales que vienen incrustadas en el JavaScript del sitio.
+- **Resultado:** sin confirmación oficial. El complemento **no se activa**, RM-152 queda solo con la fila oficial de Rexite y la equivalencia va a Validación.
+
+**TK1283-1 = Cloyes 9-0511S**
+- REVO no tiene sitio oficial (spike).
+- El buscador de Cloyes consulta **Algolia** con una llave incrustada en su JavaScript.
+- Ninguna fuente oficial conocida menciona `TK1283-1`. La equivalencia solo aparece en la descripción del ERP y en un sitio de terceros (finditparts).
+- **Resultado:** sin confirmación oficial. TK1283-1 queda como pieza sin fuente, con producto "KIT DE DISTRIBUCIÓN" (D11).
+
+**Pregunta abierta para el desarrollador:** no usé las credenciales incrustadas de Melling (OAuth) ni de Cloyes (Algolia). Usarlas sería reproducir lo que hace un navegador, pero con llaves extraídas de su código, y eso merece una decisión explícita. Aun usándolas, es poco probable que esos catálogos mencionen piezas de Rexite o de REVO.
+
 ## 2026-11-05 17:14 — Hallazgo (Tarea 7): las fichas de Fraco no publican intercambios
 
 - Revisé el texto de las fichas FSX-5840299 y FSX-5840301 buscando números de otras marcas: `JC-47-1`, `QJC`, `TF Victor`, `Quebec`, `FS-0…`, `JC20`.

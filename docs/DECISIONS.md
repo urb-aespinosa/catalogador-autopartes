@@ -87,3 +87,18 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 - Adaptador de Cloyes con navegador automatizado.
 
 **Nota:** las horas trabajadas se registran por sesión en la tabla "Registro de horas" al inicio de este archivo.
+
+## 2026-11-05 12:55 — D7. Conversión y traducción de atributos
+
+**Decisión**
+- Los atributos de fuentes en inglés o en pulgadas (Elgin, Safety, Melling, Cloyes) se convierten al formato del ejemplo: **en español y en mm**.
+- **Pulgadas → mm:** multiplicar por 25.4 y **redondear siempre a 2 decimales**. Es una regla fija, cubierta por test.
+- **Nombres, Clase y valores categóricos** se traducen con un **diccionario YAML versionado**. Ejemplos: Length → Longitud, Lifter Type → Tipo de puntería, Hydraulic → Hidráulica, Steel → Acero, Roller Yes/No → Rodillo Sí/No.
+- **Término que no esté en el diccionario:** no se traduce con IA ni se adivina. Sale con su texto original y se registra en Validación con estado **"sin traducción"**.
+- **Evidencia:** el valor original con su unidad (ej. "3.880 IN") queda en la hoja **Fuentes**.
+
+**Consecuencias**
+- La hoja Fuentes suma la columna "Valor original".
+- Validación suma el estado "sin traducción" a los de D2 (coincide / difiere / no encontrado).
+
+**Por qué:** mantiene el formato del ejemplo sin perder trazabilidad, y el resultado es idéntico en cada corrida.

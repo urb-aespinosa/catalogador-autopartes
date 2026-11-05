@@ -16,6 +16,7 @@ module ActiveSupport
     fixtures :all
 
     include SourceStubs
+    include WorkbookReader
 
     # Stubs a GET to `url` with a saved source response (a path under
     # test/fixtures/files/sources), inline JSON or an inline body.

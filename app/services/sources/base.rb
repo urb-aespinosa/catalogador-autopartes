@@ -17,9 +17,9 @@ module Sources
       )
     end
 
-    def attribute(name:, value:, url:, unit: nil, original: nil)
+    def attribute(name:, value:, url:, unit: nil, original: nil, origin: ORIGIN)
       Catalog::Records::Attribute.new(
-        klass: nil, name: name, unit: unit, value: value, url: url, origin: ORIGIN,
+        klass: nil, name: name, unit: unit, value: value, url: url, origin: origin,
         original: original || [ value, unit ].compact.join(" ")
       )
     end

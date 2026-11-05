@@ -5,7 +5,8 @@ module Sources
     ADAPTERS = {
       "ELGIN" => "Sources::Elgin",
       "FRACO" => "Sources::Fraco",
-      "REXITE" => "Sources::Rexite"
+      "REXITE" => "Sources::Rexite",
+      "SAFETY" => "Sources::Safety"
     }.freeze
 
     def self.for(manufacturer)

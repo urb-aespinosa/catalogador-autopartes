@@ -2,6 +2,12 @@
 
 Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 
+## Registro de horas
+
+| Sesión | Fecha | Inicio | Fin | Horas | Qué se hizo |
+|---|---|---|---|---|---|
+| 1 | 2026-11-05 | 11:07 | (en curso) | | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming |
+
 ---
 
 ## 2026-11-05 12:26 — D1. Criterio de fuentes de datos
@@ -58,3 +64,13 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 - **Kit de cadena de tiempo:** de las tres variantes del ejemplo se usa siempre "Kit de cadena de tiempo para sincronizar el árbol de levas con el cigüeñal." (la más específica).
 
 **Por qué:** el grupo del ERP es genérico ("KIT DE DISTRIBUCION" puede ser cadena o banda). La fuente oficial dice qué es realmente la pieza. Copiar las frases del ejemplo mantiene el estilo que espera el evaluador.
+
+## 2026-11-05 12:43 — D6. Plazo y alcance
+
+**Decisión**
+- Entrega a más tardar el **lunes 9 de noviembre de 2026 en la mañana**.
+- **Jueves 5:** cerrar spec y plan; empezar el núcleo (import, parser de descripciones, adaptador de Elgin).
+- **Viernes 6:** resto de adaptadores, normalización, export y jobs.
+- **Antes de entregar:** una sesión completa solo de verificación: clonar limpio, seguir el README, comparar contra el ejemplo y hacer la doble corrida.
+- **La calidad y los tests no se recortan.** Si algo no cabe, se recorta de la lista "si alcanza".
+- Las horas trabajadas se registran por sesión en la tabla "Registro de horas" al inicio de este archivo.

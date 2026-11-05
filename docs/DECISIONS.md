@@ -6,7 +6,7 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 
 | Sesión | Fecha | Inicio | Fin | Horas | Qué se hizo |
 |---|---|---|---|---|---|
-| 1 | 2026-11-05 | 11:07 | (en curso) | | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming |
+| 1 | 2026-11-05 | 11:07 | (en curso) | | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming, decisiones D1–D9, spec de diseño (borrador) |
 
 ---
 
@@ -102,3 +102,23 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 - Validación suma el estado "sin traducción" a los de D2 (coincide / difiere / no encontrado).
 
 **Por qué:** mantiene el formato del ejemplo sin perder trazabilidad, y el resultado es idéntico en cada corrida.
+
+## 2026-11-05 16:06 — D8. Verificación de combinaciones modelo-año
+
+**Contexto:** Elgin publica, por motor, una lista de modelos y un solo rango de años (ej. 6.0L 2007–20: Avalanche, Express, Silverado…). Cruzar cada modelo con cada año del rango puede generar vehículos que no existieron.
+
+**Decisión**
+1. Primero, un **intento de 30 minutos** para ver si Elgin publica años por modelo en otra vista. Si los publica, se usan.
+2. Si no, cada combinación modelo × año se cruza contra **NHTSA vPIC** (API oficial y gratuita; ej. `GetModelsForMakeYear`). Sus respuestas se guardan en `SourceSnapshot` como cualquier fuente.
+3. **Solo se generan las combinaciones que vPIC confirma.** Las que no coinciden van a Validación.
+4. **Nunca** se generan combinaciones no verificadas.
+
+**Por qué:** mantiene la regla de no inventar datos y usa una fuente oficial, gratuita y cacheable, así que el resultado sigue siendo determinista.
+
+## 2026-11-05 16:06 — D9. Intercambios mencionados en la descripción del ERP (matiz de D1)
+
+**Decisión**
+- Un número de intercambio que aparece en la descripción del ERP entra a la hoja Intercambios **solo si una fuente oficial lo confirma**: la ficha de la pieza o el catálogo oficial de la otra marca. Su URL queda en Fuentes.
+- Si no se confirma, va a Validación como "no encontrado".
+
+**Por qué:** los números del ERP son pistas valiosas para buscar, pero pueden tener errores de captura. Solo se publican los que una fuente oficial respalda.

@@ -4,7 +4,8 @@ module Sources
   module Registry
     ADAPTERS = {
       "ELGIN" => "Sources::Elgin",
-      "FRACO" => "Sources::Fraco"
+      "FRACO" => "Sources::Fraco",
+      "REXITE" => "Sources::Rexite"
     }.freeze
 
     def self.for(manufacturer)

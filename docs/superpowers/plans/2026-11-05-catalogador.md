@@ -62,6 +62,11 @@
 
 ---
 
+## Ejecución (D13)
+
+- **Modo directo**, en la rama `feature/catalog-pipeline` (no en `master`). Cada decisión técnica se le explica al desarrollador en español y en términos simples.
+- **Revisor independiente** (subagente) al terminar las tareas **4, 9 y 14**, y una revisión final de toda la rama.
+
 ## Calendario
 
 | Día | Tareas |
@@ -704,7 +709,14 @@ El último test usa un fixture de vPIC recortado.
     - `PISTONES` → `PISTÓN DE MOTOR`
     - `BOMBA DE ACEITE` → `BOMBA DE ACEITE DEL MOTOR`
     - `JUEGO DE EMPAQUES` → `JUEGO DE EMPAQUES DE MOTOR`
-  - Frases de apertura: las del spec §4.4, copiadas exactas. Para `KIT DE DISTRIBUCIÓN`: `"Kit de distribución para sincronizar el árbol de levas con el cigüeñal."` **(borrador: pedir revisión al desarrollador antes de cerrar la tarea)**.
+  - Frases de apertura: las del spec §4.4, copiadas exactas. Para `KIT DE DISTRIBUCIÓN`: `"Kit de distribución para sincronizar el árbol de levas con el cigüeñal."` (aprobada, D13).
+  - `oversizes.yml` (D13): designación → valor, sin conversión.
+    - `STD → STD`
+    - `+10 → 0.25 mm (+0.010")`
+    - `+20 → 0.50 mm (+0.020")`
+    - `+30 → 0.75 mm (+0.030")`
+    - `+40 → 1.00 mm (+0.040")`
+    - Si la designación no está en la tabla → `sin traducción`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -712,7 +724,6 @@ El último test usa un fixture de vPIC recortado.
 test "inches to mm, always 2 decimals" do
   assert_equal 98.55, Catalog::Normalizer.inches_to_mm(3.880)
   assert_equal 21.39, Catalog::Normalizer.inches_to_mm(0.842)
-  assert_equal 0.51, Catalog::Normalizer.inches_to_mm(0.020)
 end
 
 test "translates Elgin attributes and keeps the original" do
@@ -733,9 +744,14 @@ test "fuels and makes" do
   assert_equal ["Chevrolet", "Híbrido MHEV"], [out.applications.first.manufacturer, out.applications.first.fuel]
 end
 
-test "oversize +20 becomes 0.51 mm" do
+test "oversize is a designation from the fixed table, not a conversion" do
   out = normalize(safety_result_with(attr("Sobremedida", "+20", origin: "número de parte")))
-  assert_equal [0.51, "mm"], out.attributes.first.then { [_1.value, _1.unit] }
+  assert_equal ["Sobremedida", "Sobremedida", nil, "0.50 mm (+0.020\")"], out.attributes.first.then { [_1.klass, _1.name, _1.unit, _1.value] }
+end
+
+test "unknown oversize designation is reported" do
+  out = normalize(safety_result_with(attr("Sobremedida", "+25", origin: "número de parte")))
+  assert_equal "sin traducción", out.validations.first.status
 end
 
 test "product from source kind, fallback to ERP group" do
@@ -808,7 +824,9 @@ Regla del caso Cilindros: un valor de pista que no aparece en la fuente es `difi
 
 **Interfaces:**
 - **Produces:** `Catalog::CatalogDescription.call(product:, attributes:) -> String`
-  - Concatena la frase de apertura de `products.yml` y, en el orden de `attribute_order`, una frase por atributo: `"#{name} de #{value} #{unit}".strip + "."`, separadas por un espacio.
+  - Concatena la frase de apertura de `products.yml` y, en el orden de `attribute_order`, una frase por atributo, separadas por un espacio. Usa dos plantillas (D13):
+    - numérico con unidad: `"#{name} de #{value} #{unit}."`;
+    - texto (o número sin unidad): `"#{name}: #{value.to_s.downcase}."`.
   - Los números se formatean sin `.0` final (`16`, no `16.0`).
   - Los atributos que no aparecen en `attribute_order` van al final, en orden alfabético.
 
@@ -817,7 +835,12 @@ Regla del caso Cilindros: un valor de pista que no aparece en la fuente es `difi
 ```ruby
 test "opening plus ordered attribute sentences" do
   text = describe("JUEGO DE PUNTERÍAS DE MOTOR", [attr("Material", "Acero"), attr("Longitud", 98.55, "mm")])
-  assert_equal "Juego de punterías de motor para transmitir el movimiento del árbol de levas a las válvulas. Longitud de 98.55 mm. Material de Acero.", text
+  assert_equal "Juego de punterías de motor para transmitir el movimiento del árbol de levas a las válvulas. Longitud de 98.55 mm. Material: acero.", text
+end
+
+test "text attribute uses colon template with lowercase value" do
+  text = describe("BOMBA DE ACEITE DEL MOTOR", [attr("Material de la carcasa", "Hierro fundido")])
+  assert_equal "Bomba de aceite del motor para impulsar y distribuir el aceite del motor. Material de la carcasa: hierro fundido.", text
 end
 
 test "no attributes gives only the opening" do

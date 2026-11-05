@@ -134,7 +134,9 @@ El evaluador califica sobre todo el *approach*, las decisiones y el tiempo. Tien
 ### 4.4 Producto normalizado y descripción de catálogo — D4 y D5 **[decisión del desarrollador]**
 - El producto normalizado se decide con la **fuente oficial** (pieza vs. juego, cadena vs. banda), no solo con el grupo del ERP.
 - **Descripción** = frase de apertura del tipo de producto + una frase por atributo verificado.
-  - Las frases de atributo siguen un orden fijo por tipo de producto y tienen la forma `"{atributo} de {valor} {unidad}"`.
+  - Las frases de atributo siguen un orden fijo por tipo de producto y usan una de dos plantillas (D13):
+    - numérico con unidad: `"{atributo} de {valor} {unidad}."`;
+    - texto: `"{atributo}: {valor}."`, con el valor en minúsculas. Por ejemplo, "Material de la carcasa: hierro fundido.".
   - Solo menciona datos que están en la hoja Atributos.
   - Sin IA en ejecución.
 - **Frases de apertura:** se copian del ejemplo cuando existen; solo se redactan para tipos de producto nuevos.
@@ -145,7 +147,7 @@ El evaluador califica sobre todo el *approach*, las decisiones y el tiempo. Tien
 | PUNTERIAS | HL-7025S | JUEGO DE PUNTERÍAS DE MOTOR | COMPONENTES DEL TREN DE VÁLVULAS **[criterio de diseño]** | Juego de punterías de motor para transmitir el movimiento del árbol de levas a las válvulas. |
 | BOMBA DE ACEITE | RM-152 | BOMBA DE ACEITE DEL MOTOR | BOMBAS | Bomba de aceite del motor para impulsar y distribuir el aceite del motor. |
 | PISTONES | SP26-329R/L+20 | PISTÓN DE MOTOR | COMPONENTES DEL BLOQUE DE CILINDROS | El Pistón de motor forma parte del conjunto móvil del motor. |
-| KIT DE DISTRIBUCION | TK1283-1 | KIT DE CADENA DE TIEMPO **solo si una fuente oficial confirma la equivalencia con Cloyes 9-0511S**; si no, **KIT DE DISTRIBUCIÓN** (D11) | COMPONENTES DEL TREN DE VÁLVULAS | Kit de cadena de tiempo para sincronizar el árbol de levas con el cigüeñal. *(Para KIT DE DISTRIBUCIÓN, la frase se redacta en el plan y la revisa el desarrollador.)* |
+| KIT DE DISTRIBUCION | TK1283-1 | KIT DE CADENA DE TIEMPO **solo si una fuente oficial confirma la equivalencia con Cloyes 9-0511S**; si no, **KIT DE DISTRIBUCIÓN** (D11) | COMPONENTES DEL TREN DE VÁLVULAS | Kit de cadena de tiempo para sincronizar el árbol de levas con el cigüeñal. *(Para KIT DE DISTRIBUCIÓN, la frase aprobada es: "Kit de distribución para sincronizar el árbol de levas con el cigüeñal." — D13.)* |
 
 Para las cinco piezas, `Categoría` = `Vehículo ligero` y `Sistema` = `MOTOR`.
 
@@ -235,6 +237,13 @@ Todas las URLs y respuestas se observaron el 2026-11-05. Las copias del spike es
   - La sobremedida se toma **del número de parte** (`+20` = 0.020"), no de la descripción.
   - El número de parte es la identidad de la pieza, y el ejemplo hace lo mismo con `44338+20`.
   - Se registra como atributo. En Fuentes, su origen es `número de parte`.
+  - **Es una designación estándar, no una conversión** (D13). Se toma de una tabla fija en YAML:
+    - `STD`;
+    - `+10` = `0.25 mm (+0.010")`;
+    - `+20` = `0.50 mm (+0.020")`;
+    - `+30` = `0.75 mm (+0.030")`;
+    - `+40` = `1.00 mm (+0.040")`.
+  - El valor se escribe como en el ejemplo, por ejemplo `0.50 mm (+0.020")`. D7 no aplica.
 - **Atributos:** esta fuente no publica medidas de pistón. La pieza tendrá pocos atributos o ninguno; es lo esperado.
 - **Años:** vienen en formato `AA-AA` con dos dígitos. Las aplicaciones ya vienen por modelo, así que D8 no aplica aquí.
 - **Fabricante real (D11):**
@@ -338,8 +347,8 @@ También debe existir una tarea `bin/rails catalog:run[ruta.xlsx]` que ejecute e
 - `SourceItem`: una fila del origen (las 7 columnas tal cual), su estado de procesamiento y su producto normalizado.
 - `SourceSnapshot`: `url` (única), `body`, `content_type`, `sha256` y `fetched_at`. Es **global, no por corrida**: es la caché.
   - **Snapshots en el repo (D11):** las copias usadas para el Excel entregado se exportan a archivos versionados en el repo, y `bin/setup` las carga en la base. Así el resultado es idéntico en cualquier máquina.
-- `CatalogApplication`, `CatalogInterchange` y `CatalogAttribute`: las filas finales. Cada una guarda su `SourceItem`, URL, origen (`oficial` o vía intercambio) y valor original.
-- `ValidationEntry`: las filas de Validación.
+- **Resultado por pieza (D12):** las filas finales (aplicaciones, intercambios, atributos y validaciones) se guardan como **JSON en `SourceItem#result`**, no en tablas separadas. Cada fila lleva su URL, su origen (`oficial`, vía intercambio, etc.) y su valor original.
+- **Jobs (D12):** un solo proceso de Solid Queue con 3 hilos. Así, el límite de 1 solicitud por segundo por sitio (§6.7) se controla dentro del proceso.
 
 ### 6.4 Validación (Reconcile)
 Por cada pista que el parser extrajo del ERP se genera una fila:

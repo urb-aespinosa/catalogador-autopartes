@@ -160,3 +160,38 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
    - Se resuelve consultando en vPIC (`GetModelsForMake`, con caché) qué marca tiene cada modelo: Silverado → Chevrolet, Sierra → GMC.
    - Esto es **identificación de marca**, no verificación de años (D8).
    - Si un modelo no se encuentra en vPIC, va a Validación como "no encontrado" y no genera filas. `Fabricante` no puede quedar vacío ni con "GM".
+
+## 2026-11-05 16:40 — D12. Simplificaciones técnicas del plan (cambian §6.3 del spec)
+
+**Decisión**
+- El resultado de cada pieza (aplicaciones, intercambios, atributos, validaciones) se guarda como **JSON en `SourceItem#result`**, en lugar de tablas separadas (`CatalogApplication`, `CatalogInterchange`, `CatalogAttribute`, `ValidationEntry`).
+- Los jobs corren en **un solo proceso de Solid Queue con 3 hilos**. El límite de "1 solicitud por segundo por sitio" se controla dentro de ese proceso.
+
+**Por qué**
+- Las filas solo se escriben una vez y se leen juntas para armar el Excel, así que no hace falta consultarlas por separado.
+- Con un solo proceso, el límite de solicitudes funciona sin coordinar entre procesos.
+- Menos código y menos migraciones en un plazo corto.
+
+**Consecuencia:** si en el futuro se quisiera consultar filas sueltas (por ejemplo, "todas las aplicaciones de Nissan"), habría que pasar a tablas.
+
+## 2026-11-05 16:40 — D13. Sobremedida como designación y plantillas de frases de atributo
+
+**Decisión**
+- **La sobremedida es una designación estándar, no una conversión de unidades.** Se usa una tabla fija en YAML:
+
+  | Designación | Valor en el Excel |
+  |---|---|
+  | STD | STD |
+  | +10 | 0.25 mm (+0.010") |
+  | +20 | 0.50 mm (+0.020") |
+  | +30 | 0.75 mm (+0.030") |
+  | +40 | 1.00 mm (+0.040") |
+
+  - El valor se escribe como en el ejemplo: `0.50 mm (+0.020")`.
+  - La regla de D7 (multiplicar por 25.4 y redondear) aplica solo a **medidas**, no a designaciones.
+- **Dos plantillas para las frases de atributo** en la descripción del Catálogo (matiz de D4):
+  - **numérico con unidad:** "{atributo} de {valor} {unidad}." Ejemplo: "Longitud de 98.55 mm."
+  - **texto:** "{atributo}: {valor}." con el valor en minúsculas. Ejemplo: "Material de la carcasa: hierro fundido.", como en el ejemplo del evaluador.
+- **Frase de apertura aprobada para KIT DE DISTRIBUCIÓN:** "Kit de distribución para sincronizar el árbol de levas con el cigüeñal."
+
+**Ejecución:** modo directo en una rama nueva, explicando cada decisión. Habrá un revisor independiente al terminar las tareas 4, 9 y 14, y otro al final.

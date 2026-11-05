@@ -1,0 +1,9 @@
+<% result = item.result || {} %>
+<tr id="<%= dom_id(item) %>" class="status-<%= item.status %>">
+  <td><%= item.part_number %></td>
+  <td><%= item.manufacturer %></td>
+  <td><%= SourceItem::STATUS_LABELS.fetch(item.status) %></td>
+  <td><%= Array(result["applications"]).size %></td>
+  <td><%= Array(result["interchanges"]).size %></td>
+  <td><%= Array(result["attributes"]).size %></td>
+</tr>

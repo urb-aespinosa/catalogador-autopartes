@@ -2,10 +2,12 @@ default: &default
   dispatchers:
     - polling_interval: 1
       batch_size: 500
+  # One process with 3 threads (D12): the 1 request/second/site throttle
+  # lives in that process, so it must stay a single process.
   workers:
     - queues: "*"
       threads: 3
-      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      processes: 1
       polling_interval: 1
 
 development:

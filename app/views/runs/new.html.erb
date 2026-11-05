@@ -1,0 +1,15 @@
+<% content_for :title, "Catalogador de autopartes" %>
+
+<main class="page">
+  <h1>Catalogador de autopartes</h1>
+  <p>Sube el Excel del ERP (hoja <strong>Origen</strong>). La app busca cada pieza en el sitio oficial de su fabricante y arma el catálogo.</p>
+
+  <% if @error %>
+    <p class="error"><%= @error %></p>
+  <% end %>
+
+  <%= form_with url: runs_path, scope: :run, multipart: true, class: "upload" do |form| %>
+    <%= form.file_field :input, accept: ".xlsx" %>
+    <%= form.submit "Generar catálogo" %>
+  <% end %>
+</main>

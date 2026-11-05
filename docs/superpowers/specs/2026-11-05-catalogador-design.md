@@ -163,7 +163,7 @@ Para las cinco piezas, `Categoría` = `Vehículo ligero` y `Sistema` = `MOTOR`.
 ### 4.7 Verificación de combinaciones modelo-año — D8 **[decisión del desarrollador]**
 Aplica cuando una fuente da un rango de años **por motor** y no por modelo (Elgin).
 
-1. **Intento acotado de 30 minutos:** buscar si Elgin publica años por modelo en otra vista. Si los publica, se usan esos años.
+1. **Intento acotado de 30 minutos (investigación durante el desarrollo, no un límite de ejecución; ver §7):** buscar si Elgin publica años por modelo en otra vista. Si los publica, se usan esos años.
 2. **Si no:** cruzar cada combinación modelo × año contra **NHTSA vPIC** (§5.7).
    - Solo se generan las combinaciones que vPIC confirma.
    - Las combinaciones que vPIC no confirma van a Validación (estado `no encontrado`, campo `Modelo-año`).
@@ -292,6 +292,7 @@ También debe existir una tarea `bin/rails catalog:run[ruta.xlsx]` que ejecute e
 - **`Fetcher`**: el único punto de acceso a la red.
   - Antes de descargar, busca un `SourceSnapshot` por URL. Si existe, lo usa.
   - Solo vuelve a descargar con `FORCE_REFRESH=1`.
+  - **Timeout fijo por solicitud HTTP: 15 s** (conexión + lectura) **[decisión del desarrollador]**. Ver §6.7.
   - En tests la red está bloqueada (WebMock) y los snapshots vienen de fixtures.
 - **Adaptadores:** `Sources::Fraco`, `Sources::Elgin`, `Sources::Rexite`, `Sources::Safety` y `Sources::Melling` (+ `Sources::Cloyes` si aplica).
   - Interfaz común: la forma queda **[a criterio del constructor]**; el contenido es fijo.
@@ -363,7 +364,18 @@ El orden de las hojas es: `Origen`, `Métricas`, `Aplicaciones`, `Intercambios`,
 - **Errores:** un error de red o de parseo en una pieza no detiene la corrida. La pieza queda en `error`, se registra en Validación y el Excel se genera igual.
 - Diseño visual mínimo.
 
+### 6.7 Reglas de ejecución de red **[decisión del desarrollador]**
+- **Timeout:** cada solicitud HTTP tiene un timeout fijo de pocos segundos, **15 s** para conexión y lectura. Es un valor de configuración, no se ajusta solo.
+- **Si una solicitud falla** (timeout, error de red, respuesta 4xx/5xx inesperada):
+  - la pieza se marca en Validación con el campo `Fuente`, la URL y el estado `no encontrado`, y un detalle del error;
+  - la corrida **continúa** con las demás piezas, y el Excel se genera igual;
+  - la pieza queda en estado `error` en la pantalla.
+- **Reintentos:** sin reintentos automáticos dentro de una corrida **[criterio de diseño]**.
+- **Caché y fallas:** una respuesta fallida **no** se guarda como snapshot, así que la siguiente corrida vuelve a intentarlo. El determinismo se garantiza cuando todas las fuentes ya están en caché. Si una corrida tuvo fallas de red, la pantalla y la hoja Validación lo dicen explícitamente **[criterio de diseño]**.
+
 ## 7. Alcance — D6 **[decisión del desarrollador]**
+
+> **Sobre los "intentos de 30 minutos":** son *time-boxes* de investigación **durante el desarrollo**: tiempo máximo que el desarrollador dedica a buscar una fuente o una vista. **No** son límites de ejecución de la app. Lo que la app hace al ejecutarse está en §6.7.
 
 **Núcleo**
 1. Import y `DescriptionParser`.

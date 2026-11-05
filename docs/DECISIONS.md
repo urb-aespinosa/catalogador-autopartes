@@ -48,7 +48,7 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 
 **Por qué:** garantiza que el texto sea idéntico en cada corrida (requisito de determinismo) y que no aparezca nada que no venga de una fuente.
 
-## 2026-11-05 12:41 — D5. Producto normalizado y frases de apertura
+## 2026-11-05 12:31 — D5. Producto normalizado y frases de apertura
 
 **Decisión**
 - **El producto normalizado se decide con la fuente oficial**, no solo con el grupo del ERP: pieza vs. juego, cadena vs. banda, etc.

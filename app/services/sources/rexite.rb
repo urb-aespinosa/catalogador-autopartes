@@ -19,7 +19,12 @@ module Sources
     private
 
     def applications(product)
-      terms = product.fetch("attributes", []).to_h { [ _1["name"], Array(_1["terms"]).map { |t| t["name"] } ] }
+      attributes = product["attributes"]
+      unless attributes.is_a?(Array) && attributes.all?(Hash)
+        raise ParseError.new(url: product["permalink"], detail: "el producto no trae atributos legibles")
+      end
+
+      terms = attributes.to_h { [ _1["name"], Array(_1["terms"]).filter_map { |t| t["name"] if t.is_a?(Hash) } ] }
       compatible = terms["Compatible"].to_a
       raise ParseError.new(url: product["permalink"], detail: "el producto no trae compatibilidad") if compatible.empty?
 
@@ -46,12 +51,20 @@ module Sources
     end
 
     # "Motores" looks like "2.8L 6Cyl L"; the trailing L/V is the block layout.
+    # The product does not say which compatible vehicle has which engine, so a
+    # field is filled only when the product lists a single value for it.
     def engine_facts(terms)
+      blocks = terms["Motores"].to_a.map { _1[/\s([LV])\z/, 1] }.uniq
       {
-        liters: terms["Litros"]&.first&.to_f,
-        cylinders: terms["Cilindros"]&.first&.to_i,
-        block: terms["Motores"].to_a.first.to_s[/\s([LV])\z/, 1]
+        liters: single(terms["Litros"])&.to_f,
+        cylinders: single(terms["Cilindros"])&.to_i,
+        block: single(blocks)
       }
+    end
+
+    def single(values)
+      values = Array(values).uniq
+      values.first if values.one?
     end
   end
 end

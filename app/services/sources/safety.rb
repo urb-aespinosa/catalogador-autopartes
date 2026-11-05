@@ -1,10 +1,10 @@
 module Sources
   # Safety Auto Parts legacy web catalog (USA market). Spec §5.4.
   #
-  # There is no part-number search, so the adapter lists the engines of the
-  # make groups that cover the ERP make, reads each engine's application table
-  # and keeps the rows for the part's base number. Engines whose liters match
-  # the ERP hint go first; if none lists the part, every engine is read.
+  # There is no part-number search, so the adapter lists every engine of the
+  # make groups that cover the ERP make and reads each engine's application
+  # table, keeping the rows for the part's base number. Only the make narrows
+  # the search; engine hints never do, so they cannot change the result (D1).
   #
   # Safety groups makes ("GM Trucks"), so each model's real make is identified
   # with NHTSA vPIC (D11). A model without an identified make produces no row.
@@ -30,21 +30,13 @@ module Sources
     private
 
     def find_rows(base_number, hints)
-      engines = group_codes(hints).flat_map { engines_for(_1) }
-      preferred, rest = engines.partition { liters_hint?(_1, hints) }
-      rows = preferred.flat_map { rows_for(_1, base_number) }
-      rows = rest.flat_map { rows_for(_1, base_number) } if rows.empty?
-      rows
+      group_codes(hints).flat_map { engines_for(_1) }.flat_map { rows_for(_1, base_number) }
     end
 
     def group_codes(hints)
       make = hints&.make && Catalog::Vpic.display_make(hints.make)
       codes = GROUPS.select { |_code, makes| makes.include?(make) }.keys
       codes.presence || GROUPS.keys
-    end
-
-    def liters_hint?(engine, hints)
-      Array(hints&.liters).any? { engine[:label].start_with?("#{_1}L ") }
     end
 
     # tradengines.php answers with JavaScript: new Option('label','code').
@@ -66,9 +58,17 @@ module Sources
       end
     end
 
-    # "14-21 Silverado 14-21 Sierra 18-21 Express" → [["Silverado", 2014..2021], ...]
-    def model_ranges(text)
-      text.scan(/(\d\d)-(\d\d) ([^\d]+?)(?=\s+\d\d-\d\d|\s*\z)/).map do |from, to, model|
+    APPLICATION = /(\d\d)-(\d\d) (.+?)(?=\s+\d\d-\d\d\s|\s*\z)/
+
+    # "14-21 Silverado 1500 14-21 Sierra" → [["Silverado 1500", 2014..2021], ...]
+    # The pieces must rebuild the whole cell; anything else is a layout change.
+    def model_ranges(text, url)
+      cell = text.squish
+      pieces = cell.scan(APPLICATION)
+      rebuilt = pieces.map { |from, to, model| "#{from}-#{to} #{model}" }.join(" ")
+      raise ParseError.new(url: url, detail: "aplicación ilegible: #{cell.inspect}") if pieces.empty? || rebuilt != cell
+
+      pieces.map do |from, to, model|
         [ model.strip, Catalog::DescriptionParser.expand_year(from)..Catalog::DescriptionParser.expand_year(to) ]
       end
     end
@@ -77,7 +77,7 @@ module Sources
       validations = []
       applications = matches.flat_map do |match|
         engine = engine_facts(match[:engine][:label])
-        model_ranges(match[:applications]).flat_map do |model, years|
+        model_ranges(match[:applications], match[:url]).flat_map do |model, years|
           make, evidence = Catalog::Vpic.identify_make(model, candidates: GROUPS.fetch(match[:engine][:group]))
           unless make
             validations << unidentified_make(model, match[:url])
@@ -96,14 +96,18 @@ module Sources
       [ applications, validations.uniq ]
     end
 
-    # "4.3L 262 LV3 OHV 12V V6 14-27 SIERRA SILVERADO"
+    CYLINDER_COUNTS = (3..12)
+
+    # "4.3L 262 LV3 OHV 12V V6 14-27 SIERRA SILVERADO". Engine codes such as
+    # "L86" share the layout shape, so the layout is the last L/V token with a
+    # real cylinder count.
     def engine_facts(label)
-      layout = label.match(/\b([LV])(\d{1,2})\b/)
+      layout = label.scan(/\b([LV])(\d{1,2})\b/).reverse.find { CYLINDER_COUNTS.cover?(_2.to_i) }
       {
         liters: label[/\A(\d+\.\d)L\b/, 1]&.to_f,
         cid: label[/\A\d+\.\dL (\d{3})\b/, 1]&.to_i,
-        cylinders: layout && layout[2].to_i,
-        block: layout && layout[1]
+        cylinders: layout && layout[1].to_i,
+        block: layout && layout[0]
       }
     end
 

@@ -35,17 +35,20 @@ class Catalog::VpicTest < ActiveSupport::TestCase
     assert_equal [ "Modelo-año", "Chevrolet Avalanche 2020", "no encontrado" ], [ validations.first.field, validations.first.source_value, validations.first.status ]
   end
 
-  test "the vPIC model may be the leading words of the source model" do
-    rows, = Catalog::Vpic.expand([ application(model: "Silverado 1500 HD Classic", years: 2007..2007) ])
+  test "model names compare ignoring case, spaces and hyphens only" do
+    rows, = Catalog::Vpic.expand([ application(model: "SILVER-ADO", years: 2007..2007) ])
 
     assert_equal [ 2007 ], rows.map(&:year)
   end
 
-  test "partial words do not match" do
-    rows, validations = Catalog::Vpic.expand([ application(model: "Expressway", years: 2007..2007) ])
+  test "trims and market names vPIC does not list go to validation (spec 5.7)" do
+    rows, validations = Catalog::Vpic.expand([
+      application(model: "Silverado 1500 HD Classic", years: 2007..2007),
+      application(model: "Express Pasajeros", years: 2007..2007)
+    ])
 
     assert_empty rows
-    assert_equal 1, validations.size
+    assert_equal [ "Chevrolet Silverado 1500 HD Classic 2007", "Chevrolet Express Pasajeros 2007" ], validations.map(&:source_value)
   end
 
   test "unconfirmed years of one application are reported together as ranges" do

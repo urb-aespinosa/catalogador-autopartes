@@ -78,6 +78,20 @@ class Sources::FracoTest < ActiveSupport::TestCase
     assert_raises(Sources::ParseError) { fraco.call(item: item("FSX-0000002"), hints: nil) }
   end
 
+  test "the make is the first one written on the sheet" do
+    assert_equal [ "NISSAN" ], fraco.call(item: item("FSX-5840299"), hints: nil).applications.map(&:manufacturer).uniq
+  end
+
+  test "a sheet without a known make raises ParseError instead of leaving Fabricante empty" do
+    without_makes = Sources::Fraco.send(:remove_const, :MAKES)
+    Sources::Fraco.const_set(:MAKES, %w[TOYOTA])
+
+    assert_raises(Sources::ParseError) { fraco.call(item: item("FSX-5840301"), hints: nil) }
+  ensure
+    Sources::Fraco.send(:remove_const, :MAKES)
+    Sources::Fraco.const_set(:MAKES, without_makes)
+  end
+
   test "part numbers are escaped in the URL" do
     stub = stub_source("https://www.fraco.com.mx/QRMX/A%2FB%2B1.pdf", status: 404)
 

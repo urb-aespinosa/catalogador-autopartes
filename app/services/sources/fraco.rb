@@ -89,13 +89,21 @@ module Sources
       raise ParseError.new(url: url, detail: "no se encontraron datos de motor") unless cylinders
 
       {
-        manufacturer: MAKES.find { text.match?(/\b#{Regexp.escape(_1)}\b/) },
+        manufacturer: make(text, url),
         liters: text[/\b(\d\.\d)\s?L\b/, 1]&.to_f,
         cc: text[/([\d.,]+)\s*c\.c\./, 1]&.delete(".,")&.to_i,
         cid: text[/(\d+)\s*pulg/, 1]&.to_i,
         cylinders: cylinders.to_i,
         block: text[/\b([LV])\d{1,2}\b/, 1]
       }
+    end
+
+    # The make written first on the sheet ("NISSAN (Datsun)"); never empty.
+    def make(text, url)
+      positions = MAKES.filter_map { |name| (index = text =~ /\b#{Regexp.escape(name)}\b/) && [ index, name ] }
+      raise ParseError.new(url: url, detail: "la ficha no menciona una armadora conocida") if positions.empty?
+
+      positions.min.last
     end
 
     def attributes(text, url)

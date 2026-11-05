@@ -231,6 +231,20 @@ Time-box de desarrollo de 30 minutos (D8, paso 1). Usé unos 5.
 
 **Costo si no se acepta:** se cambia un solo método (`Catalog::Vpic.same_model?`) a igualdad exacta, y el catálogo pierde muchas aplicaciones.
 
+## 2026-11-05 17:29 — Corrección: se revierte la regla de primeras palabras; se aplica el spec §5.7
+
+**Por qué se revierte**
+- El revisor independiente de las tareas 5–9 señaló que la regla de 17:14 **contradice el spec**. El §5.7 nombra `Express Pasajeros` y `Silverado 1500 HD Classic` como ejemplos de nombres que vPIC no reconoce y que deben ir a Validación.
+- La regla además **inventaba combinaciones**. `Silverado 1500 Classic` solo existió en 2007, pero con el rango del motor (2007–20) habría salido de 2008 a 2020 porque vPIC confirma "Silverado". Eso va contra la anti-meta de "nunca generar combinaciones no verificadas".
+
+**Regla vigente (spec §5.7):** los nombres se comparan ignorando solo mayúsculas, espacios y guiones. Las variantes y los nombres de mercado que vPIC no lista van a Validación.
+
+**Impacto medido con los fixtures (HL-7025S, solo Chevrolet)**
+- Elgin lista 32 modelos Chevrolet y vPIC reconoce 9: Avalanche, Camaro, Colorado, Corvette, Impala, Monte Carlo, Suburban, Tahoe y Trailblazer.
+- Quedan fuera, y van a Validación, todas las variantes de Silverado, Express y Suburban (`Silverado 1500`, `Express 2500`, `Suburban 2500`…) y los nombres mexicanos (`Cheyenne`, `Sonora`, `Express Pasajeros`).
+
+**Pendiente del desarrollador (spec §9.3):** decidir si se agrega una tabla de alias revisada, por ejemplo `Silverado 1500 → Silverado`. Mientras no se decida, rige la regla del spec.
+
 ## 2026-11-05 17:14 — Hallazgo (Tarea 7): las fichas de Fraco no publican intercambios
 
 - Revisé el texto de las fichas FSX-5840299 y FSX-5840301 buscando números de otras marcas: `JC-47-1`, `QJC`, `TF Victor`, `Quebec`, `FS-0…`, `JC20`.

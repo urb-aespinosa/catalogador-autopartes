@@ -37,15 +37,14 @@ module Catalog
       owners.one? ? owners.first : [ nil, nil ]
     end
 
-    # A vPIC name confirms a source name when it equals the source name's leading
-    # whole words: "Silverado" confirms "Silverado 1500 HD Classic", never "Silverados".
+    # Spec §5.7: names match ignoring only case, spaces and hyphens. Trims and
+    # market names vPIC does not list ("Silverado 1500 HD Classic",
+    # "Express Pasajeros") are not confirmed; they go to Validación.
     def same_model?(source_name, vpic_name)
-      source = words(source_name)
-      vpic = words(vpic_name)
-      vpic.any? && source.first(vpic.size) == vpic
+      squash(source_name) == squash(vpic_name) && squash(source_name).present?
     end
 
-    def words(name) = name.to_s.upcase.split(/[^A-Z0-9]+/).reject(&:empty?)
+    def squash(name) = name.to_s.upcase.delete(" -")
 
     def display_make(make) = MAKES.fetch(make.to_s.upcase, make.to_s)
 

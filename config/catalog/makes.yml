@@ -13,19 +13,25 @@ display:
   GMC: GMC
   HONDA: Honda
   HUMMER: Hummer
+  HYUNDAI: Hyundai
   ISUZU: Isuzu
   JEEP: Jeep
+  KIA: Kia
   LAND ROVER: Land Rover
   LINCOLN: Lincoln
   MAZDA: Mazda
+  MITSUBISHI: Mitsubishi
   NISSAN: Nissan
   OLDSMOBILE: Oldsmobile
+  PEUGEOT: Peugeot
   PONTIAC: Pontiac
   RAM: Ram
   RENAULT: Renault
   SAAB: Saab
   SATURN: Saturn
+  SUZUKI: Suzuki
   TOYOTA: Toyota
+  VOLKSWAGEN: Volkswagen
 
 # Safety groups several makes under one code; vPIC tells which make owns each
 # model (D11). Candidates are the makes that code covers.

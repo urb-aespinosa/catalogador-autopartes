@@ -47,6 +47,30 @@ class Sources::RexiteTest < ActiveSupport::TestCase
     assert_raises(Sources::ParseError) { rexite.call(item: item("RM-996"), hints: nil) }
   end
 
+  test "a product with several engines does not pin one engine to every row" do
+    product = {
+      "sku" => "RM-995", "permalink" => "https://rexite.net/y",
+      "attributes" => [
+        { "name" => "Marcas", "terms" => [ { "name" => "Nissan" } ] },
+        { "name" => "Compatible", "terms" => [ { "name" => "Nissan Pickup 1990" } ] },
+        { "name" => "Litros", "terms" => [ { "name" => "2.0" }, { "name" => "2.4" } ] },
+        { "name" => "Cilindros", "terms" => [ { "name" => "4" } ] },
+        { "name" => "Motores", "terms" => [ { "name" => "2.0L 4Cyl L" }, { "name" => "2.4L 4Cyl L" } ] }
+      ]
+    }
+    stub_source(format(SEARCH, "RM-995"), json: [ product ])
+
+    app = rexite.call(item: item("RM-995"), hints: nil).applications.first
+
+    assert_equal [ nil, 4, "L" ], [ app.liters, app.cylinders, app.block ]
+  end
+
+  test "a product whose attributes are null raises ParseError" do
+    stub_source(format(SEARCH, "RM-994"), json: [ { "sku" => "RM-994", "permalink" => "https://rexite.net/z", "attributes" => nil } ])
+
+    assert_raises(Sources::ParseError) { rexite.call(item: item("RM-994"), hints: nil) }
+  end
+
   test "registry maps REXITE" do
     assert_instance_of Sources::Rexite, Sources::Registry.for("REXITE")
   end

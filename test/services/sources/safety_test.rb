@@ -5,6 +5,8 @@ class Sources::SafetyTest < ActiveSupport::TestCase
   VPIC = "https://vpic.nhtsa.dot.gov/api/vehicles".freeze
 
   setup do
+    # Engines without a saved page list nothing (declared first: later stubs win).
+    stub_request(:get, %r{#{Regexp.escape(BASE)}/tradappresults\.php}).to_return(body: "<table></table>")
     %w[GMT GMC].each { stub_source("#{BASE}/tradengines.php?MakeCode=#{_1}", "safety/tradengines_#{_1}.html") }
     Dir.children(file_fixture("sources/safety")).grep(/\Atradappresults_/).each do |name|
       code = name[/tradappresults_(.+)\.html/, 1]
@@ -64,14 +66,44 @@ class Sources::SafetyTest < ActiveSupport::TestCase
     assert_equal [ "Fabricante", "no encontrado" ], [ validation.field, validation.status ]
   end
 
-  test "falls back to every engine when the liters hint misses" do
-    wrong_liters = Catalog::DescriptionParser.call("83-301 CHEVROLET SILVERADO V6 262 9.9 14/18")
+  test "the ERP liters hint never limits which engines are read (D1)" do
     stub_request(:get, %r{#{Regexp.escape(BASE)}/tradappresults\.php}).to_return(body: "<table></table>")
     stub_source("#{BASE}/tradappresults.php?EngineCode=GMT-LV3", "safety/tradappresults_GMT-LV3.html")
+    other_engine = "<table><tr><td>Piston w/Pin<td>SP26-329R/L<td>99-07 Silverado 1500 99-07 Sierra 2500<td></tr></table>"
+    stub_source("#{BASE}/tradappresults.php?EngineCode=GMT-325", body: other_engine)
+    stub_source("#{VPIC}/GetModelsForMake/Chevrolet?format=json", json: { "Results" => [ { "Model_Name" => "Silverado" }, { "Model_Name" => "Express" }, { "Model_Name" => "Silverado 1500" } ] })
+    stub_source("#{VPIC}/GetModelsForMake/GMC?format=json", json: { "Results" => [ { "Model_Name" => "Sierra" }, { "Model_Name" => "Savana" }, { "Model_Name" => "Sierra 2500" } ] })
 
-    r = safety.call(item: item("SP26-329R/L+20"), hints: wrong_liters)
+    rows = safety.call(item: item("SP26-329R/L+20"), hints: hints).applications
 
-    assert_includes r.applications.map(&:model), "Silverado"
+    assert_includes rows.map { [ _1.model, _1.liters, _1.year ] }, [ "Silverado 1500", 5.3, 2007 ]
+    assert_includes rows.map { [ _1.model, _1.liters, _1.year ] }, [ "Silverado", 4.3, 2014 ]
+  end
+
+  test "model names with digits are read" do
+    stub_request(:get, %r{#{Regexp.escape(BASE)}/tradappresults\.php}).to_return(body: "<table></table>")
+    stub_source("#{BASE}/tradappresults.php?EngineCode=GMT-LV3", body: "<table><tr><td>Piston w/Pin<td>SP26-329R/L<td>94-03 S10 Pickup 99-07 Sierra 2500<td></tr></table>")
+    stub_source("#{VPIC}/GetModelsForMake/Chevrolet?format=json", json: { "Results" => [ { "Model_Name" => "S10 Pickup" } ] })
+    stub_source("#{VPIC}/GetModelsForMake/GMC?format=json", json: { "Results" => [ { "Model_Name" => "Sierra 2500" } ] })
+
+    rows = safety.call(item: item("SP26-329R/L+20"), hints: hints).applications.map { [ _1.manufacturer, _1.model ] }.uniq
+
+    assert_equal [ [ "Chevrolet", "S10 Pickup" ], [ "GMC", "Sierra 2500" ] ], rows
+  end
+
+  test "an application cell that cannot be read raises ParseError" do
+    stub_request(:get, %r{#{Regexp.escape(BASE)}/tradappresults\.php}).to_return(body: "<table></table>")
+    stub_source("#{BASE}/tradappresults.php?EngineCode=GMT-LV3", body: "<table><tr><td>Piston w/Pin<td>SP26-329R/L<td>see catalog<td></tr></table>")
+
+    assert_raises(Sources::ParseError) { safety.call(item: item("SP26-329R/L+20"), hints: hints) }
+  end
+
+  test "engine codes shaped like L86 are not cylinder counts" do
+    facts = safety.send(:engine_facts, "6.2L L86 VIN J OHV 16V V8 14-27 SIERRA YUKON")
+
+    assert_equal [ 6.2, nil, 8, "V" ], [ facts[:liters], facts[:cid], facts[:cylinders], facts[:block] ]
+    assert_equal [ 6, "V" ], safety.send(:engine_facts, "4.3L 262 LV3 OHV 12V V6 14-27 SIERRA SILVERADO").values_at(:cylinders, :block)
+    assert_equal [ 4, "L" ], safety.send(:engine_facts, "2.0L 121 J20/L34 DOHC 16V L4 99-03 TRACKER").values_at(:cylinders, :block)
   end
 
   test "a part in no engine is not_found after reading every engine" do

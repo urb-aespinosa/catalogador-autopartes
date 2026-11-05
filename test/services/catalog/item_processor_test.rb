@@ -12,6 +12,18 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
     end
   end
 
+  class BrokenSource < Sources::Base
+    def call(item:, hints:) = nil.fetch("models")
+  end
+
+  class FailingInterchangeSource < Sources::Base
+    def call(item:, hints:) = raise(Catalog::Fetcher::SourceError.new(url: "https://brand/x", detail: "timeout después de 15 s"))
+  end
+
+  BrokenRegistry = Struct.new(:adapter) do
+    def for(_manufacturer) = adapter.new
+  end
+
   setup { stub_all_sources_from_fixtures }
 
   def source_item(**values)
@@ -52,6 +64,28 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
     item = source_item(manufacturer: "ELGIN", part_number: "HL-7025S", item_group: "PUNTERIAS")
 
     assert_equal "error de fuente", process(item).validations.find { _1.field == "Fuente" }.status
+  end
+
+  test "an unexpected adapter error is recorded as error de fuente and does not raise" do
+    item = source_item(manufacturer: "ELGIN", part_number: "HL-7025S", item_group: "PUNTERIAS")
+
+    r = process(item, registry: BrokenRegistry.new(BrokenSource))
+
+    fuente = r.validations.find { _1.field == "Fuente" }
+    assert_equal "error de fuente", fuente.status
+    assert_match "NoMethodError", fuente.source_value
+    assert_equal "error", item.reload.status
+  end
+
+  test "a failed interchange complement is reported without demoting the part" do
+    confirmed = [ { "part" => "RM-152", "number" => "M152", "brand" => "Melling", "adapter" => "Failing", "url" => "https://melling/confirm" } ]
+    item = source_item(manufacturer: "REXITE", part_number: "RM-152", item_group: "BOMBA DE ACEITE", unit: "PZA")
+
+    r = process(item, interchanges: confirmed, adapters: { "Failing" => FailingInterchangeSource })
+
+    assert_equal "done", item.reload.status
+    assert_equal [ "oficial" ], r.applications.map(&:origin).uniq
+    assert_includes r.validations.map { [ _1.field, _1.status, _1.url ] }, [ "Fuente", "error de fuente", "https://brand/x" ]
   end
 
   test "end to end over fixtures for HL-7025S" do

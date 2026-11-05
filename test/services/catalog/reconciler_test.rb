@@ -15,9 +15,9 @@ class Catalog::ReconcilerTest < ActiveSupport::TestCase
     item_result(applications: [ 1981, 1982 ].map { app(manufacturer: "Nissan", model: "280ZX", year: _1, liters: 2.8, cylinders: 6, block: "L") })
   end
 
-  def reconcile(description, result, unit: "PZA")
+  def reconcile(description, result, unit: "PZA", product_kind: nil)
     item = SourceItem.new(part_number: "X", description: description, unit: unit)
-    Catalog::Reconciler.call(item: item, hints: Catalog::DescriptionParser.call(description), result: result)
+    Catalog::Reconciler.call(item: item, hints: Catalog::DescriptionParser.call(description), result: result, product_kind: product_kind)
   end
 
   def status(validations, field, erp_value = nil)
@@ -71,17 +71,24 @@ class Catalog::ReconcilerTest < ActiveSupport::TestCase
     assert_equal "difiere", status(reconcile("CHEVROLET SILVERADO V6 4.3 89/90", result), "Años")
   end
 
-  test "unit PZA against a set differs" do
+  test "unit PZA against a source that sells a set differs" do
     result = item_result(product: "JUEGO DE PUNTERÍAS DE MOTOR", applications: [ app(manufacturer: "Chevrolet", model: "Silverado", year: 2014) ])
 
-    unit = reconcile("CHEVROLET SILVERADO 99/23", result).find { _1.field == "Unidad" }
-    assert_equal [ "PZA", "JUEGO DE PUNTERÍAS DE MOTOR", "difiere" ], [ unit.erp_value, unit.source_value, unit.status ]
+    unit = reconcile("CHEVROLET SILVERADO 99/23", result, product_kind: :set).find { _1.field == "Unidad" }
+    assert_equal [ "PZA", "juego", "difiere" ], [ unit.erp_value, unit.source_value, unit.status ]
   end
 
-  test "unit JUEGO against a set matches" do
+  test "unit JUEGO against a source that sells a set matches" do
+    result = item_result(product: "JUEGO DE PUNTERÍAS DE MOTOR", applications: [ app(manufacturer: "Chevrolet", model: "Silverado", year: 2014) ])
+
+    assert_equal "coincide", status(reconcile("CHEVROLET SILVERADO 99/23", result, unit: "JUEGO", product_kind: :set), "Unidad")
+  end
+
+  test "a source that does not state its presentation leaves the unit not found" do
     result = item_result(product: "JUEGO DE EMPAQUES DE MOTOR", applications: [ app(manufacturer: "Nissan", model: "D21", year: 1991) ])
 
-    assert_equal "coincide", status(reconcile("NISSAN D21 89/03", result, unit: "JUEGO"), "Unidad")
+    unit = reconcile("NISSAN D21 89/03", result, unit: "JUEGO").find { _1.field == "Unidad" }
+    assert_equal [ nil, "no encontrado" ], [ unit.source_value, unit.status ]
   end
 
   test "without source data every hint is not found" do

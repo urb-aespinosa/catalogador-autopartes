@@ -7,14 +7,16 @@ module Catalog
   #   difiere        the source has the field and the value does not match
   #   no encontrado  the source does not publish that field
   class Reconciler
-    SET_PRODUCT = /\A(JUEGO|KIT) DE /
     SET_UNITS = %w[JUEGO KIT].freeze
+    # Presentation stated by the source itself (Sources::Result#product_kind).
+    KIND_LABELS = { set: "juego", chain: "kit" }.freeze
 
-    def self.call(item:, hints:, result:) = new(item, hints, result).validations
+    def self.call(item:, hints:, result:, product_kind: nil) = new(item, hints, result, product_kind).validations
 
-    def initialize(item, hints, result)
+    def initialize(item, hints, result, product_kind)
       @item = item
       @hints = hints
+      @product_kind = product_kind
       @apps = result.applications
       @interchanges = result.interchanges
       @attributes = result.attributes
@@ -79,13 +81,16 @@ module Catalog
       end
     end
 
+    # Only a presentation the source states (e.g. Elgin "Package of 4") is
+    # compared; the product name comes from the ERP group and proves nothing.
     def unit_row
       return if @item.unit.blank?
-      return validation("Unidad", @item.unit, nil, "no encontrado") unless @has_source
+
+      label = KIND_LABELS[@product_kind]
+      return validation("Unidad", @item.unit, nil, "no encontrado") unless label
 
       erp_set = SET_UNITS.include?(@item.unit.upcase)
-      source_set = @product.to_s.match?(SET_PRODUCT)
-      validation("Unidad", @item.unit, @product, erp_set == source_set ? "coincide" : "difiere")
+      validation("Unidad", @item.unit, label, erp_set ? "coincide" : "difiere")
     end
 
     def row(field, erp_value, source_values, match)

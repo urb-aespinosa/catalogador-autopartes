@@ -9,14 +9,13 @@ module Catalog
   # page becomes an "error de fuente" row and the run continues (spec §6.7).
   class ItemProcessor
     INTERCHANGES = YAML.load_file(Rails.root.join("config/catalog/interchanges.yml")).freeze
-    SOURCE_ERRORS = [ Fetcher::SourceError, Sources::ParseError ].freeze
-
     def self.call(item) = new(item).call
 
-    def initialize(item, interchanges: INTERCHANGES, adapters: {})
+    def initialize(item, interchanges: INTERCHANGES, adapters: {}, registry: Sources::Registry)
       @item = item
       @interchanges = interchanges.select { _1["part"] == item.part_number }
       @adapters = adapters
+      @registry = registry
       @validations = []
       @status = "done"
     end
@@ -28,23 +27,29 @@ module Catalog
       result = add_complements(result, hints) if result
 
       normalized = Normalizer.call(item: @item, result: result)
-      final = normalized.with(validations: @validations + normalized.validations + Reconciler.call(item: @item, hints: hints, result: normalized))
+      reconciled = Reconciler.call(item: @item, hints: hints, result: normalized, product_kind: result&.product_kind)
+      final = normalized.with(validations: @validations + normalized.validations + reconciled)
       @item.update!(status: @status, product: final.product, result: final.to_h)
       final
     end
 
     private
 
+    # Any failure inside an adapter (network, changed page, or an unexpected
+    # Ruby error on content we did not foresee) becomes "error de fuente" for
+    # this part only: the run goes on and the workbook is still produced.
     def official_result(hints)
-      adapter = Sources::Registry.for(@item.manufacturer)
+      adapter = @registry.for(@item.manufacturer)
       return not_found(@item.manufacturer, nil) unless adapter
 
       result = adapter.call(item: @item, hints: hints)
       return not_found(@item.manufacturer, nil) unless result.status == :found
 
       expand_years(result)
-    rescue *SOURCE_ERRORS => e
-      source_error(e)
+    rescue StandardError => e
+      @status = "error"
+      record_source_error(e)
+      nil
     end
 
     def expand_years(result)
@@ -74,8 +79,9 @@ module Catalog
 
       origin = "vía intercambio de #{entry['number']} (#{entry['brand']})"
       found.applications.map { _1.with(origin: origin) }
-    rescue *SOURCE_ERRORS => e
-      source_error(e)
+    rescue StandardError => e
+      # The part keeps its own official data; only the complement is reported.
+      record_source_error(e)
       []
     end
 
@@ -89,10 +95,10 @@ module Catalog
       nil
     end
 
-    def source_error(error)
-      @status = "error"
-      @validations << Records::Validation.new(field: "Fuente", erp_value: @item.manufacturer, source_value: error.detail, url: error.url, status: "error de fuente")
-      nil
+    def record_source_error(error)
+      detail = error.respond_to?(:detail) ? error.detail : "#{error.class.name}: #{error.message}"
+      url = error.respond_to?(:url) ? error.url : nil
+      @validations << Records::Validation.new(field: "Fuente", erp_value: @item.manufacturer, source_value: detail, url: url, status: "error de fuente")
     end
   end
 end

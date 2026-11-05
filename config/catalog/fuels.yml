@@ -1,0 +1,8 @@
+# Source fuel → "Combustible" column, spelled as in the evaluator example.
+GAS: Gasolina
+FLEX: Flex
+DIESEL: Diésel
+CNG: Gas natural
+FULL HYBRID EV-GAS (FHEV): Híbrido FHEV
+FULL HYBRID EV-FLEX (FHEV): Híbrido FHEV
+MILD HYBRID EV-GAS (MHEV): Híbrido MHEV

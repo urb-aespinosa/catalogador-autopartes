@@ -1,0 +1,37 @@
+# Normalized products (D4, D5, D11, D13). Opening sentences are copied from
+# the evaluator example when it has one for that product.
+products:
+  JUEGO DE EMPAQUES DE MOTOR:
+    subsystem: JUNTAS Y SISTEMAS DE SELLADO
+    opening: Juego de empaques de motor para sellar las uniones del motor.
+    attribute_order: [Número de válvulas, Diámetro, Carrera, Junta Cabeza]
+  JUEGO DE PUNTERÍAS DE MOTOR:
+    subsystem: COMPONENTES DEL TREN DE VÁLVULAS
+    opening: Juego de punterías de motor para transmitir el movimiento del árbol de levas a las válvulas.
+    attribute_order: [Tipo de puntería, Rodillo, Material, Longitud, Diámetro exterior máximo]
+  BOMBA DE ACEITE DEL MOTOR:
+    subsystem: BOMBAS
+    opening: Bomba de aceite del motor para impulsar y distribuir el aceite del motor.
+    attribute_order: []
+  PISTÓN DE MOTOR:
+    subsystem: COMPONENTES DEL BLOQUE DE CILINDROS
+    opening: El Pistón de motor forma parte del conjunto móvil del motor.
+    attribute_order: [Sobremedida]
+  KIT DE CADENA DE TIEMPO:
+    subsystem: COMPONENTES DEL TREN DE VÁLVULAS
+    opening: Kit de cadena de tiempo para sincronizar el árbol de levas con el cigüeñal.
+    attribute_order: []
+  KIT DE DISTRIBUCIÓN:
+    subsystem: COMPONENTES DEL TREN DE VÁLVULAS
+    opening: Kit de distribución para sincronizar el árbol de levas con el cigüeñal.
+    attribute_order: []
+
+# ERP group (+ product kind detected in the official source) → product.
+# The first matching rule wins; a rule without `kind` matches any kind.
+rules:
+  - { group: JUEGO DE EMPAQUES, product: JUEGO DE EMPAQUES DE MOTOR }
+  - { group: PUNTERIAS, kind: set, product: JUEGO DE PUNTERÍAS DE MOTOR }
+  - { group: BOMBA DE ACEITE, product: BOMBA DE ACEITE DEL MOTOR }
+  - { group: PISTONES, product: PISTÓN DE MOTOR }
+  - { group: KIT DE DISTRIBUCION, kind: chain, product: KIT DE CADENA DE TIEMPO }
+  - { group: KIT DE DISTRIBUCION, product: KIT DE DISTRIBUCIÓN }

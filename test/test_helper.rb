@@ -2,6 +2,7 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
+Dir[File.expand_path("support/**/*.rb", __dir__)].each { require _1 }
 
 # Tests never touch the network: every source response comes from a fixture.
 WebMock.disable_net_connect!
@@ -13,6 +14,8 @@ module ActiveSupport
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
+
+    include SourceStubs
 
     # Stubs a GET to `url` with a saved source response (a path under
     # test/fixtures/files/sources), inline JSON or an inline body.

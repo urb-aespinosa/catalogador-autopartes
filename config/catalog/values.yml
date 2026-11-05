@@ -1,0 +1,9 @@
+# Categorical attribute values → Spanish (D7).
+Hydraulic: Hidráulica
+Steel: Acero
+"Yes": Sí
+"No": "No"
+# Fraco head gasket codes, as explained in the sheet's own legend:
+# "MLO: Multilámina Acerada" (MLS in the evaluator example), "SB: No asbesto".
+MLO: MLS
+SB: No asbesto

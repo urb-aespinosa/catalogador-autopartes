@@ -12,6 +12,8 @@ display:
   FORD: Ford
   GMC: GMC
   HONDA: Honda
+  HUMMER: Hummer
+  ISUZU: Isuzu
   JEEP: Jeep
   LAND ROVER: Land Rover
   LINCOLN: Lincoln
@@ -21,6 +23,7 @@ display:
   PONTIAC: Pontiac
   RAM: Ram
   RENAULT: Renault
+  SAAB: Saab
   SATURN: Saturn
   TOYOTA: Toyota
 

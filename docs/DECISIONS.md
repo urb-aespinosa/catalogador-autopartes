@@ -281,7 +281,13 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
   - `Cheyenne`, `Sonora` y `Express Pasajeros`.
 
   Esos nombres siguen yendo a Validación.
-- La tabla se revisa antes del commit.
+- **Tabla aprobada por el desarrollador tal cual**, incluidos `Silverado 1500 LTD` → `Silverado LTD` y `Sierra 1500 Limited` → `Sierra Limited`.
+- **HD** se consulta como `Silverado` o `Sierra`. vPIC separa "Silverado HD" solo a partir de 2020; antes, esas versiones estaban dentro de "Silverado".
+- **Limitación conocida:** vPIC confirma la línea de modelo y el año, no la versión de carga (1500/2500/3500), igual que no confirma el motor (D11).
+  - Algunas versiones dejaron de fabricarse antes que su línea. Por ejemplo, Express 1500 después de 2014 y Suburban 2500 después de 2013.
+  - Por eso pueden aparecer combinaciones de versión y año que no existieron.
+  - Ninguna fuente oficial gratuita publica años por versión de carga.
+  - La aplicación sigue respaldada por Elgin como fuente oficial.
 
 **2. Credenciales incrustadas de Melling (OAuth) y Cloyes (Algolia): no se usan.**
 - Sería usar sus APIs sin autorización.

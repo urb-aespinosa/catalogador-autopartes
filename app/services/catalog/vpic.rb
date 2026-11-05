@@ -11,6 +11,7 @@ module Catalog
     BASE = "https://vpic.nhtsa.dot.gov/api/vehicles".freeze
     EVIDENCE = "verificación NHTSA vPIC".freeze
     MAKES = YAML.load_file(Rails.root.join("config/catalog/makes.yml")).fetch("display").freeze
+    ALIASES = YAML.load_file(Rails.root.join("config/catalog/vpic_aliases.yml")).freeze
 
     module_function
 
@@ -52,8 +53,10 @@ module Catalog
       "#{BASE}/GetModelsForMakeYear/make/#{Fetcher.encode_path(display_make(make))}/modelyear/#{year}?format=json"
     end
 
+    # The capacity alias (D14) only changes the name sent to vPIC.
     def confirmed?(app, year)
-      model_names(year_url(app.manufacturer, year)).any? { same_model?(app.model, _1) }
+      name = ALIASES.dig(display_make(app.manufacturer), app.model) || app.model
+      model_names(year_url(app.manufacturer, year)).any? { same_model?(name, _1) }
     end
 
     def confirmed_row(app, year)

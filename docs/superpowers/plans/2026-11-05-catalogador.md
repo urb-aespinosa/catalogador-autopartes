@@ -1080,6 +1080,7 @@ end
   - limitaciones conocidas: submodelos (D3); vPIC confirma modelo + año, no motor (D11); estado de RM-152 y TK1283-1.
   - por qué la hoja **Intercambios** sale con pocas filas: las equivalencias no tienen confirmación oficial (D9). Cada número aparece en Validación con su motivo (D14).
   - alias de capacidad para vPIC: qué son y que en el Excel se conserva el nombre de Elgin (D14).
+  - limitación conocida (D14): vPIC confirma línea de modelo + año, no la versión de carga (1500/2500/3500). Pueden aparecer combinaciones de versión y año que no existieron (por ejemplo, Express 1500 después de 2014 o Suburban 2500 después de 2013). Ninguna fuente oficial gratuita publica años por versión. La aplicación sigue respaldada por Elgin.
   - `poppler-utils` también en el `Dockerfile` (D14; pendiente menor del revisor).
   - Commit.
 - [ ] **Step 4: Sesión de verificación** (dedicada, antes del lunes 9 en la mañana):

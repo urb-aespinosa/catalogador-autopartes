@@ -63,6 +63,32 @@ class Catalog::VpicTest < ActiveSupport::TestCase
     assert_equal "Chevrolet Avalanche 2008-2020", validations.first.source_value
   end
 
+  test "a capacity alias is used only to ask vPIC; the row keeps the source name (D14)" do
+    rows, validations = Catalog::Vpic.expand([ application(model: "Silverado 1500", years: 2007..2007) ])
+
+    assert_equal [ [ "Silverado 1500", 2007 ] ], rows.map { [ _1.model, _1.year ] }
+    assert_empty validations
+  end
+
+  test "no alias for Classic variants or market names (D14)" do
+    rows, validations = Catalog::Vpic.expand([
+      application(model: "Silverado 2500 HD Classic", years: 2007..2007),
+      application(model: "Cheyenne", years: 2007..2007)
+    ])
+
+    assert_empty rows
+    assert_equal 2, validations.size
+  end
+
+  test "every alias only removes capacity suffixes" do
+    Catalog::Vpic::ALIASES.each do |make, aliases|
+      aliases.each do |source, vpic|
+        assert_equal vpic.split, source.split - %w[1500 2500 3500 HD], "#{make}: #{source} → #{vpic}"
+        refute_match(/Classic/, source)
+      end
+    end
+  end
+
   test "rows with a single year or from MEX sources are untouched" do
     mex = application(model: "280ZX", year: 1981, market: "MEX")
     single = application(model: "Silverado", year: 2014)

@@ -73,4 +73,16 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 - **Viernes 6:** resto de adaptadores, normalización, export y jobs.
 - **Antes de entregar:** una sesión completa solo de verificación: clonar limpio, seguir el README, comparar contra el ejemplo y hacer la doble corrida.
 - **La calidad y los tests no se recortan.** Si algo no cabe, se recorta de la lista "si alcanza".
+
+**Núcleo (entra sí o sí)**
+- Import y parser de descripciones.
+- Adaptadores de FRACO, ELGIN, REXITE y SAFETY (descargas HTTP simples).
+- Normalización y export con las 8 hojas (las 6 del ejemplo + Fuentes + Validación).
+- Caché de descargas, test de doble corrida y jobs.
+- Pantalla: subir archivo → **progreso en vivo por pieza con Turbo Streams** → descargar Excel. Es requisito del desarrollador desde el inicio: la app no debe parecer trabada mientras procesa.
+- **Complemento de RM-152 vía Melling M152.** Es la demostración real de la regla de intercambios de D1; sin al menos un caso, la regla queda solo en papel.
+- **Intento acotado para TK1283-1 (REVO), máximo 30 minutos:** buscar el servicio JSON que usa el buscador de Cloyes, o las fuentes oficiales de Dayco KTC1372 / SA Gear 76260. Si nada funciona, TK1283-1 va a Validación como "no encontrado".
+
+**Si alcanza**
+- Adaptador de Cloyes con navegador automatizado.
 - Las horas trabajadas se registran por sesión en la tabla "Registro de horas" al inicio de este archivo.

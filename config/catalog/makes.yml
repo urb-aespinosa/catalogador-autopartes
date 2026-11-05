@@ -1,0 +1,51 @@
+# Vehicle makes. Versioned: changing it changes the catalog.
+#
+# display: source spelling (upcased) → name written in the "Fabricante" column
+#          and sent to NHTSA vPIC.
+display:
+  ACURA: Acura
+  BUICK: Buick
+  CADILLAC: Cadillac
+  CHEVROLET: Chevrolet
+  CHRYSLER: Chrysler
+  DODGE: Dodge
+  FORD: Ford
+  GMC: GMC
+  HONDA: Honda
+  JEEP: Jeep
+  LAND ROVER: Land Rover
+  LINCOLN: Lincoln
+  MAZDA: Mazda
+  NISSAN: Nissan
+  OLDSMOBILE: Oldsmobile
+  PONTIAC: Pontiac
+  RAM: Ram
+  RENAULT: Renault
+  SATURN: Saturn
+  TOYOTA: Toyota
+
+# Safety groups several makes under one code; vPIC tells which make owns each
+# model (D11). Candidates are the makes that code covers.
+safety_groups:
+  GMT: [Chevrolet, GMC]
+  GMC: [Buick, Cadillac, Chevrolet, Oldsmobile, Pontiac]
+
+# Vehicle makers: an interchange from one of these brands is "OEM".
+oem_brands:
+  - Acura
+  - Buick
+  - Cadillac
+  - Chevrolet
+  - Chrysler
+  - Dodge
+  - Ford
+  - GMC
+  - Honda
+  - Jeep
+  - Lincoln
+  - Mazda
+  - Nissan
+  - Peugeot
+  - Ram
+  - Renault
+  - Toyota

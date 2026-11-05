@@ -64,3 +64,9 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "roo", "~> 4.0"
+gem "caxlsx", "~> 4.5"
+gem "faraday", "~> 2.15"
+
+gem "webmock", "~> 3.34", group: :test

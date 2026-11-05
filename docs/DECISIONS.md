@@ -113,6 +113,11 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 3. **Solo se generan las combinaciones que vPIC confirma.** Las que no coinciden van a Validación.
 4. **Nunca** se generan combinaciones no verificadas.
 
+**Alcance (aclaración del desarrollador):**
+- La verificación con vPIC **solo aplica cuando la fuente da el rango de años por motor** (como Elgin).
+- Se usa **solo para aplicaciones de mercado USA**.
+- Cuando la fuente da años por modelo (Fraco, Rexite, Safety), esos años se usan tal cual.
+
 **Por qué:** mantiene la regla de no inventar datos y usa una fuente oficial, gratuita y cacheable, así que el resultado sigue siendo determinista.
 
 ## 2026-11-05 16:06 — D9. Intercambios mencionados en la descripción del ERP (matiz de D1)

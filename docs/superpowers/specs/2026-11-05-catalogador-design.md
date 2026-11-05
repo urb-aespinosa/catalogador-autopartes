@@ -161,7 +161,10 @@ Para las cinco piezas, `Categoría` = `Vehículo ligero` y `Sistema` = `MOTOR`.
 - Las marcas de intercambio se escriben como las nombra la fuente (por ejemplo `Cloyes`, `Melling` o `SA Gear`).
 
 ### 4.7 Verificación de combinaciones modelo-año — D8 **[decisión del desarrollador]**
-Aplica cuando una fuente da un rango de años **por motor** y no por modelo (Elgin).
+**Alcance:**
+- Aplica **solo** cuando la fuente da un rango de años **por motor** y no por modelo (hoy, solo Elgin).
+- La verificación vPIC se usa **solo para aplicaciones de mercado USA**.
+- Cuando la fuente da años **por modelo** (Fraco, Rexite, Safety), esos años se usan tal cual, sin verificación vPIC.
 
 1. **Intento acotado de 30 minutos (investigación durante el desarrollo, no un límite de ejecución; ver §7):** buscar si Elgin publica años por modelo en otra vista. Si los publica, se usan esos años.
 2. **Si no:** cruzar cada combinación modelo × año contra **NHTSA vPIC** (§5.7).
@@ -248,6 +251,7 @@ Todas las URLs y respuestas se observaron el 2026-11-05. Las copias del spike es
 ### 5.7 NHTSA vPIC — verificación de modelo-año (D8)
 - **Qué es:** la API oficial y gratuita de la NHTSA, sin llave. Ejemplo: `GET https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/{armadora}/modelyear/{año}?format=json`.
 - **Caché:** sus respuestas se guardan en `SourceSnapshot` como cualquier otra fuente, con la misma regla de no volver a descargar.
+- **Cuándo se usa:** solo para aplicaciones de mercado USA de fuentes que dan años por motor (§4.7).
 - **No es fuente de aplicaciones:** solo confirma combinaciones.
   - La aplicación sigue siendo de Elgin, con la URL de Elgin y `Mercado` = `USA`.
   - La URL de vPIC que confirma cada combinación se agrega en Fuentes con el origen `verificación NHTSA vPIC` **[criterio de diseño]**.
@@ -425,7 +429,7 @@ El orden de las hojas es: `Origen`, `Métricas`, `Aplicaciones`, `Intercambios`,
 
 ## 9. Preguntas abiertas y riesgos
 
-1. **Tabla de vehículos del evaluador** (submodelos): pendiente de respuesta del evaluador (D3).
+1. **Tabla de vehículos del evaluador** (submodelos): pendiente de respuesta del evaluador (D3). **El plan asume que no llega** **[criterio de diseño]**. Si llega antes del viernes 6 en la noche, se evalúa con el desarrollador; si llega después, se documenta como trabajo futuro.
 2. **Melling M152 no verificado** (§5.6). Es un riesgo para un elemento del núcleo.
 3. **Nombres de modelo en vPIC** (§5.7). Los nombres del mercado mexicano o las variantes de Elgin pueden no existir en vPIC y quedar fuera. Mitigación: registrar el hallazgo y revisar con el desarrollador si hace falta una tabla de alias.
 4. **Intercambios de FRACO:** el ejemplo reporta intercambios para FSX-5840299 (TF Victor JC-47-1 y Quebec QJC-36-1MLO). Hay que confirmar si la ficha PDF los publica. Si no, se aplica D9.

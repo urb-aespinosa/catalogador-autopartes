@@ -69,6 +69,54 @@ class Sources::ElginTest < ActiveSupport::TestCase
     assert_raises(Sources::ParseError) { elgin.call(item: item("HL-7025S"), hints: nil) }
   end
 
+  test "a single-year engine row is that one year" do
+    page = file_fixture("sources/elgin/part_HL-7025S_page2.html").read.sub(/1999&ndash;16/, "2008")
+    stub_source("#{BASE}/engine/part/#{PART_UUID}/?page=2", body: page)
+
+    years = result.applications.map(&:years).uniq
+
+    assert_includes years, 2008..2008
+    refute years.any? { _1.last > 2030 }
+  end
+
+  test "an unreadable year cell raises ParseError" do
+    page = file_fixture("sources/elgin/part_HL-7025S_page2.html").read.sub(/1999&ndash;16/, "")
+    stub_source("#{BASE}/engine/part/#{PART_UUID}/?page=2", body: page)
+
+    assert_raises(Sources::ParseError) { result }
+  end
+
+  test "placeholder values are nil, never zero" do
+    name = Dir.children(file_fixture("sources/elgin/engines")).find { _1.include?("2e9a552e") }
+    page = file_fixture("sources/elgin/engines/#{name}").read.sub(%r{(CID</p>\s*<p class="mb-0">)364}, '\1-')
+    stub_source("#{BASE}/engine/chevrolet/lifters-tappets/2e9a552e-b502-43f0-ac8f-5e5f058ab52c/", body: page)
+
+    rows = result.applications.select { _1.url.include?("2e9a552e") }
+
+    assert rows.any?
+    assert rows.all? { _1.cid.nil? && _1.liters == 6.0 }
+  end
+
+  test "an autocomplete response that is not a list raises ParseError" do
+    stub_source("#{BASE}/part-autocomplete/?q=HL-7025S", json: { "error" => "rate limited" })
+
+    assert_raises(Sources::ParseError) { result }
+  end
+
+  test "a part page without the engine table raises ParseError" do
+    page = file_fixture("sources/elgin/part_HL-7025S.html").read.gsub(/data-label="MFR"/, 'data-label="X"')
+    stub_source("#{BASE}/engine/part/#{PART_UUID}/", body: page)
+
+    assert_raises(Sources::ParseError) { result }
+  end
+
+  test "an engine row without its details link raises ParseError" do
+    page = file_fixture("sources/elgin/part_HL-7025S_page2.html").read.sub(/data-test="engine-details-link"/, "")
+    stub_source("#{BASE}/engine/part/#{PART_UUID}/?page=2", body: page)
+
+    assert_raises(Sources::ParseError) { result }
+  end
+
   test "registry maps ELGIN to this adapter" do
     assert_instance_of Sources::Elgin, Sources::Registry.for("ELGIN")
     assert_nil Sources::Registry.for("REVO")

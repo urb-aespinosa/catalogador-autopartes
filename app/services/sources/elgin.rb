@@ -31,8 +31,13 @@ module Sources
     private
 
     def find_uuid(part_number)
-      url = "#{BASE}/part-autocomplete/?q=#{ERB::Util.url_encode(part_number)}"
-      match = Catalog::Fetcher.get_json(url).find { _1["label"] == part_number }
+      url = "#{BASE}/part-autocomplete/?q=#{Catalog::Fetcher.encode_path(part_number)}"
+      suggestions = Catalog::Fetcher.get_json(url)
+      unless suggestions.is_a?(Array)
+        raise ParseError.new(url: url, detail: "la búsqueda no devolvió una lista")
+      end
+
+      match = suggestions.find { _1.is_a?(Hash) && _1["label"] == part_number }
       match && match["value"]
     end
 
@@ -56,29 +61,42 @@ module Sources
     # Follows the htmx "?page=N" rows until there are no more pages.
     def engine_rows(page, part_url)
       rows = []
+      visited = Set[part_url]
       loop do
-        rows.concat(page.css("td[data-label='MFR']").map { engine_row(_1.parent) })
-        next_page = page.at_css("tr[hx-get^='?page=']")&.[]("hx-get")
-        break unless next_page
+        page_rows = page.css("td[data-label='MFR']").map { engine_row(_1.parent, part_url) }
+        raise ParseError.new(url: part_url, detail: "no se encontró la tabla de motores") if page_rows.empty?
 
-        page = fetch_html("#{part_url}#{next_page}")
+        rows.concat(page_rows)
+        next_url = page.at_css("tr[hx-get^='?page=']")&.[]("hx-get")&.then { "#{part_url}#{_1}" }
+        break if next_url.nil? || !visited.add?(next_url)
+
+        page = fetch_html(next_url)
       end
       rows
     end
 
-    def engine_row(tr)
+    def engine_row(tr, url)
+      year = tr.at_css("td[data-label='YEAR']")&.text&.strip
+      link = tr.at_css("a[data-test='engine-details-link']")&.[]("href")
+      raise ParseError.new(url: url, detail: "fila de motor sin enlace de detalle") unless link
+
       {
         manufacturer: tr.at_css("td[data-label='MFR']").text.strip,
-        years: year_range(tr.at_css("td[data-label='YEAR']").text.strip),
-        url: BASE + tr.at_css("a[data-test='engine-details-link']")["href"]
+        years: year_range(year, url),
+        url: BASE + link
       }
     end
 
-    # "1999–16" → 1999..2016 (the end shares the start's century unless it wraps).
-    def year_range(text)
-      from, to = text.split(/[–-]/).map(&:strip)
-      start = from.to_i
-      finish = (start / 100 * 100) + to.to_i
+    # "1999–16" → 1999..2016 (the end shares the start's century unless it
+    # wraps); "2008" → 2008..2008. Anything else is a layout change.
+    def year_range(text, url)
+      match = /\A(\d{4})(?:\s*[–-]\s*(\d{2}|\d{4}))?\z/.match(text.to_s.gsub("&ndash;", "–"))
+      raise ParseError.new(url: url, detail: "año ilegible: #{text.inspect}") unless match
+
+      start = match[1].to_i
+      return start..start unless match[2]
+
+      finish = match[2].length == 4 ? match[2].to_i : (start / 100 * 100) + match[2].to_i
       finish += 100 if finish < start
       start..finish
     end
@@ -105,11 +123,16 @@ module Sources
       fuels = labels["Fuel / Delivery"].to_s.split(" / ").first.to_s.split(",").map(&:strip)
       {
         models: models.split(",").map(&:strip).reject(&:empty?),
-        liters: labels["Liters"]&.to_f,
-        cid: labels["CID"]&.to_i,
-        cylinders: labels["Cyl."]&.to_i,
+        liters: number(labels["Liters"])&.to_f,
+        cid: number(labels["CID"])&.to_i,
+        cylinders: number(labels["Cyl."])&.to_i,
         fuels: fuels.presence || [ nil ]
       }
+    end
+
+    # Elgin shows "-" for unknown values; those stay nil, never 0.
+    def number(text)
+      text if text.to_s.match?(/\A\d+(\.\d+)?\z/)
     end
   end
 end

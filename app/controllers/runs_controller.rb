@@ -16,8 +16,18 @@ class RunsController < ApplicationController
     render_error(e.message)
   end
 
+  # HTML only: Turbo follows the upload redirect accepting turbo streams first,
+  # and a stream here would keep it from navigating to the page.
   def show
     @run = Run.find(params[:id])
+    respond_to(&:html)
+  end
+
+  # The run's current progress block, asked for by the catch-up controller once
+  # the page's stream subscription is confirmed.
+  def progress
+    @run = Run.find(params[:id])
+    respond_to(&:turbo_stream)
   end
 
   private

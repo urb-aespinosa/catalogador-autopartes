@@ -21,6 +21,24 @@ class RunsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#source_item_#{run.source_items.first.id}", /pendiente/
   end
 
+  # Manual verification finding: Turbo submits the form accepting turbo
+  # streams first and follows the redirect with the same Accept header. The
+  # run page must still come back as the full HTML page, or Turbo does not
+  # navigate.
+  test "a Turbo form submission lands on the full HTML run page" do
+    turbo_accept = { "Accept" => "text/vnd.turbo-stream.html, text/html, application/xhtml+xml" }
+
+    post runs_path, params: { run: { input: fixture_file_upload("data_prueba_tecnica.xlsx") } }, headers: turbo_accept
+    run = Run.last
+    assert_redirected_to run_path(run)
+    follow_redirect!(headers: turbo_accept)
+
+    assert_response :success
+    assert_equal "text/html", response.media_type
+    assert_select "html body main h1", "Corrida #{run.id}"
+    assert_select "#progress [id^=source_item_]", 5
+  end
+
   test "an invalid file shows a friendly error" do
     post runs_path, params: { run: { input: fixture_file_upload("not_excel.txt") } }
 
@@ -42,15 +60,15 @@ class RunsControllerTest < ActionDispatch::IntegrationTest
 
     get run_path(run)
 
-    assert_select "turbo-cable-stream-source[data-controller=catch-up][data-catch-up-url-value=?]", run_path(run, format: :turbo_stream)
+    assert_select "turbo-cable-stream-source[data-controller=catch-up][data-catch-up-url-value=?]", progress_run_path(run)
     assert_select "#progress[data-status=processing] table.items"
   end
 
-  test "the turbo stream format returns the current progress" do
+  test "the progress endpoint returns the current progress as a turbo stream" do
     run = Run.create!(status: "processing")
     item = run.source_items.create!(position: 0, part_number: "RM-152", manufacturer: "REXITE", status: "done")
 
-    get run_path(run, format: :turbo_stream)
+    get progress_run_path(run), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type

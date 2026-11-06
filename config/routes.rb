@@ -10,5 +10,8 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   root "runs#new"
-  resources :runs, only: %i[new create show]
+  resources :runs, only: %i[new create show] do
+    # Current progress as a turbo stream, for the page's catch-up on subscribe.
+    get :progress, on: :member
+  end
 end

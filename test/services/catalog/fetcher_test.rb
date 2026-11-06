@@ -20,6 +20,18 @@ class Catalog::FetcherTest < ActiveSupport::TestCase
     assert_equal 1, SourceSnapshot.count
   end
 
+  # Final review, Important 2: vPIC URLs repeat once per application-year, so a
+  # forced run must not download the same URL again and again.
+  test "FORCE_REFRESH downloads each URL only once per process" do
+    stub = stub_request(:get, "https://example.com/a").to_return({ body: "old" }, { body: "new" }, { body: "newer" })
+    Catalog::Fetcher.get("https://example.com/a")
+
+    with_env("FORCE_REFRESH" => "1") { 3.times { Catalog::Fetcher.get("https://example.com/a") } }
+
+    assert_requested stub, times: 2
+    assert_equal "new", SourceSnapshot.find_by!(url: "https://example.com/a").body
+  end
+
   test "stores content type and sha256" do
     stub_request(:get, "https://example.com/a").to_return(body: "hi", headers: { "Content-Type" => "text/html; charset=utf-8" })
 

@@ -1,7 +1,8 @@
 module Catalog
   # The only door to the network. Every response is stored as a SourceSnapshot
   # and reused on later runs, which is what makes two runs identical.
-  # Failed responses are never stored. FORCE_REFRESH=1 downloads again.
+  # Failed responses are never stored. FORCE_REFRESH=1 downloads again, once
+  # per URL and process.
   module Fetcher
     class SourceError < StandardError
       attr_reader :url, :detail, :status
@@ -14,13 +15,31 @@ module Catalog
       end
     end
 
+    REFRESHED = Set.new
+    REFRESH_LOCK = Mutex.new
+
     module_function
+
+    def reset_refreshed! = REFRESH_LOCK.synchronize { REFRESHED.clear }
 
     def get(url)
       cached = cached(url)
-      return cached if cached && ENV["FORCE_REFRESH"] != "1"
+      return cached if cached && !claim_refresh(url)
 
-      store(url, download(url), cached)
+      begin
+        store(url, download(url), cached)
+      rescue StandardError
+        REFRESH_LOCK.synchronize { REFRESHED.delete(url) }
+        raise
+      end
+    end
+
+    # FORCE_REFRESH=1 downloads each URL again at most once per process, so a
+    # URL repeated many times in one run is not requested again and again.
+    def claim_refresh(url)
+      return false unless ENV["FORCE_REFRESH"] == "1"
+
+      REFRESH_LOCK.synchronize { REFRESHED.add?(url) ? true : false }
     end
 
     def get_json(url)

@@ -18,6 +18,9 @@ module ActiveSupport
     include SourceStubs
     include WorkbookReader
 
+    # FORCE_REFRESH remembers refreshed URLs per process; each test starts clean.
+    setup { Catalog::Fetcher.reset_refreshed! }
+
     # Stubs a GET to `url` with a saved source response (a path under
     # test/fixtures/files/sources), inline JSON or an inline body.
     def stub_source(url, fixture = nil, json: nil, body: nil, status: 200, content_type: nil)

@@ -391,3 +391,26 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 **Sitios que no respondieron a nuestro User-Agent:** `www.moresa.com.mx` y `www.tfvictor.com.mx`, sin respuesta (código 000). `catalogo.dcp.com.mx` responde, pero el catálogo pide login; no se usa.
 
 **Pendiente (después de la adenda de mercado):** con la regla de arriba, JC-20 cubre 1989–1998 y nuestra pieza llega a 1999, así que JC-20 **no se confirma**: queda en Validación con su URL. FS-001225 (1989–2004) sí se confirma. El adaptador DC/Dacomsa, con snapshots y tests, queda para después de la adenda.
+
+## 2026-11-06 10:31 — Hallazgo (spike de mercado): INEGI RAIAVL y EPA fueleconomy.gov
+
+Todas las consultas automáticas usaron el User-Agent del proyecto y una solicitud por segundo.
+
+**INEGI RAIAVL**
+- La **API PxWeb** (`/app/tabulados/pxwebv2/api/v1/…/RAIAVL_8_9.px`) respondió **403** a nuestro User-Agent. Se registra; no se esquiva.
+- La **exportación del tabulado RAIAVL_8_9** falla incluso con selecciones pequeñas y está limitada a 150,000 celdas (lo comprobó el desarrollador en su navegador). No se automatiza el formulario.
+- La sección **"Datos abiertos"** de `https://www.inegi.org.mx/datosprimarios/iavl/` sí funciona. Es la **fuente oficial que usamos**: el desarrollador la descargó a mano, y la procedencia está en `db/reference/inegi/conjunto_de_datos_raiavl_mensual_venta_csv.yml` (URL, fecha y sha256).
+- **Contenido:** ventas mensuales de 2005-01 a 2026-09 por marca, modelo, tipo, segmento, origen y país de origen. **No** trae versión, motor ni combustible.
+- **La marca es el grupo** ("General Motors"), no Chevrolet, GMC o Buick. El nombre comercial a veces lo dice ("GMC Sierra Cabina Regular"), a veces no ("Silverado 1500 Cabina Regular").
+- **Cobertura de nuestros modelos:**
+  - Nissan: Pickup Largo, Estacas Largo y Chasis Largo hasta 2016; Tsuru hasta 2018. No hay "D21" ni "Ichivan" (son anteriores a 2005).
+  - GM: aparecen Silverado 1500/2500/3500, Express, Suburban, Tahoe, Escalade, Sierra, Yukon, entre otros. **En México sí se vendieron Silverado 2500/3500**, que EPA no cubre.
+- Las cifras **se revisan cada mes**. Por determinismo se fija la copia descargada; una descarga nueva es otro snapshot.
+
+**EPA fueleconomy.gov** (`/ws/rest/vehicle/menu/{year,make,model,options}` y `/ws/rest/vehicle/{id}`)
+- Responde en JSON con nuestro User-Agent y cubre de 1984 a 2027.
+- **Nombres propios de EPA:** "Truck 2WD" (Nissan 1995), "Silverado C15 2WD", "Lacrosse/Allure", "Express 2500 2WD Passenger".
+- **Las "options" dan motor, transmisión y combustible**, pero **no la versión**: el campo `trim` viene vacío. Ejemplos: "Auto 4-spd, 4 cyl, 2.4 L"; "Auto 6-spd, 8 cyl, 5.3 L, SIDI; FFV". La ficha trae `displ`, `cylinders`, `fuelType` ("Regular", "Gasoline or E85"), `drive` y `VClass`.
+- **Comprobación útil:** Buick Lacrosse/Allure 2005 solo tiene 3.6 L y 3.8 L. Así EPA **refuta "Allure 2005 5.3L"**.
+- **Matiz para combustible:** en 2016, el Silverado C15 5.3 L aparece **con y sin FFV**. Si el mismo motor tiene varias opciones de combustible ese año, el combustible sigue siendo ambiguo y queda vacío, igual que en D15.
+- **Cobertura:** no incluye pickups pesadas (Silverado/Sierra 2500/3500 HD). Sí incluye Express 2500/3500 Passenger en 2016. No incluye modelos solo mexicanos.

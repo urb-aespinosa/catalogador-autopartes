@@ -1,0 +1,31 @@
+# Provenance of the INEGI RAIAVL open-data snapshot (D19).
+# Downloaded manually by the developer in a browser: the PxWeb API answered
+# 403 to the project User-Agent and the RAIAVL_8_9 tabular export fails
+# (limit of 150,000 cells), so the open-data section is the source we use.
+file: conjunto_de_datos_raiavl_mensual_venta_csv.zip
+sha256: 014d4bf35a5208d9d89f6435dd56c457a85121886a11d0e027e156462d97f5d5
+bytes: 22423427
+source_page: https://www.inegi.org.mx/datosprimarios/iavl/
+section: Datos abiertos
+title: "Registro Administrativo de la Industria Automotriz de Vehículos Ligeros. Venta de vehículos"
+publisher: Instituto Nacional de Estadística y Geografía (INEGI)
+license: https://www.inegi.org.mx/inegi/terminos.html
+coverage: "2005-01 a 2026-09 (cifras revisadas al mes de septiembre; metadatos modified 2026-10-07)"
+downloaded_at: "2026-11-06 10:24–10:25 (CDMX)"
+downloaded_by: developer (manual, browser)
+filters: none (complete open-data file)
+contents:
+  - conjunto_de_datos/raiavl_venta_mensual_tr_cifra_YYYY.csv  # one per year 2005-2026
+  - diccionario_de_datos/diccionario_de_datos_raiavl_venta_mensual_2005_2026.csv
+  - metadatos/metadatos_raiavl_venta_mensual_2005_2026.txt
+  - catalogos/tc_mes.csv, catalogos/tc_pais_origen.csv
+columns: [PROD_EST, COBERTURA, ANIO, ID_MES, MARCA, MODELO, TIPO, SEGMENTO, ORIGEN, ID_PAIS_ORIGEN, UNI_VEH, ESTATUS]
+extract:
+  file: raiavl_venta_nissan_gm.csv
+  built_by: bin/rails catalog:inegi:filter (Catalog::InegiSalesFilter)
+  rule: "MARCA in [Nissan, General Motors]; PROD_EST and COBERTURA dropped (constant); values verbatim; total sort by all columns"
+  check: test/services/catalog/inegi_sales_filter_test.rb regenerates it from the zip and compares sha256
+notes:
+  - MARCA is the manufacturer group ("General Motors"), not the vehicle brand (Chevrolet, GMC, Buick…).
+  - No version, engine or fuel columns.
+  - Figures are revised monthly, so this snapshot is pinned for determinism; a newer download is a new snapshot.

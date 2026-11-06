@@ -11,6 +11,14 @@ namespace :catalog do
     puts "Catálogo generado: #{output} (#{summary})"
   end
 
+  namespace :inegi do
+    desc "Rebuild the Nissan/GM extract of INEGI RAIAVL sales from the versioned zip (D19)"
+    task filter: :environment do
+      rows = Catalog::InegiSalesFilter.call
+      puts "Extracto INEGI: #{rows} filas → #{Catalog::InegiSalesFilter::OUTPUT.relative_path_from(Rails.root)}"
+    end
+  end
+
   namespace :snapshots do
     desc "Export cached source snapshots to versioned files (default: db/snapshots)"
     task :dump, [ :dir ] => :environment do |_, args|

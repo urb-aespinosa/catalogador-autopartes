@@ -25,11 +25,15 @@ module Catalog
       sheet = open_sheet
       index = header_index(sheet.row(1))
 
-      (2..sheet.last_row.to_i).filter_map do |number|
+      rows = (2..sheet.last_row.to_i).filter_map do |number|
         values = sheet.row(number)
         row = COLUMNS.values.to_h { |key| [ key, cell_text(values[index[key]]) ] }
-        row if row[:part_number].present?
-      end.each_with_index.map { |row, position| row.merge(position: position) }
+        row.merge(origin_values: COLUMNS.values.map { origin_value(values[index[_1]]) }) if row[:part_number].present?
+      end
+      # With no parts no job would run and the run page would wait forever.
+      raise InvalidFile, "La hoja Origen no tiene piezas." if rows.empty?
+
+      rows.each_with_index.map { |row, position| row.merge(position: position) }
     end
 
     private
@@ -52,6 +56,17 @@ module Catalog
       end
 
       COLUMNS.to_h { |title, key| [ key, headers.index(title) ] }
+    end
+
+    # The cell as it is in the input, for the Origen sheet: a number stays a
+    # number (6536.0 → 6536) and text stays text, leading zeros included.
+    def origin_value(value)
+      case value
+      when nil, String then value
+      when Float then value == value.floor ? value.to_i : value
+      when Numeric then value
+      else value.to_s
+      end
     end
 
     # Excel stores codes like 6536 as 6536.0; keep whole numbers without ".0".

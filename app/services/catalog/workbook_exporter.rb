@@ -100,13 +100,14 @@ module Catalog
       end
     end
 
+    # The input row as read, each cell with its original type (final review,
+    # Important 4). Items stored before origin_values existed use the text fields.
     def origin_rows
       @items.map do |item|
-        [ number_or_text(item.internal_code), item.part_number, item.item_description, item.description, item.item_group, item.manufacturer, item.unit ]
+        item.origin_values ||
+          [ item.internal_code, item.part_number, item.item_description, item.description, item.item_group, item.manufacturer, item.unit ]
       end
     end
-
-    def number_or_text(value) = value.to_s.match?(/\A\d+\z/) ? value.to_i : value
 
     def application_rows
       each_item do |item, result|

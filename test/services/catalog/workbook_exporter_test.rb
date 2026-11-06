@@ -42,6 +42,44 @@ class Catalog::WorkbookExporterTest < ActiveSupport::TestCase
     assert_equal 5, rows("Origen").size
   end
 
+  # Builds an ERP workbook with the given Origen rows (REVO: no adapter, so no
+  # network) and exports it.
+  def export_input(rows, types:)
+    input = Rails.root.join("tmp/input_#{Process.pid}.xlsx")
+    package = Axlsx::Package.new
+    package.workbook.add_worksheet(name: "Origen") do |sheet|
+      sheet.add_row Catalog::SourceWorkbook::COLUMNS.keys
+      rows.each { sheet.add_row _1, types: types }
+    end
+    package.serialize(input.to_s)
+    Catalog::WorkbookExporter.call(Catalog::Pipeline.run(input), @path)
+    workbook_rows(@path)["Origen"].drop(1)
+  ensure
+    FileUtils.rm_f(input)
+  end
+
+  # Final review, Important 4: Origen reproduces the input, cell types included.
+  test "Origen keeps each cell's original type" do
+    types = %i[string string string string string string string]
+    numeric_code = [ :integer ] + types.drop(1)
+    origen = export_input([ [ "00451", "44338", "PISTONES", "X", "PISTONES", "REVO", "PZA" ] ], types: types) +
+             export_input([ [ 6536, "TK1283-1", "KIT", "X", "KIT", "REVO", "JUEGO" ] ], types: numeric_code)
+
+    assert_equal [ "00451", "44338" ], origen.first.first(2)
+    assert_kind_of String, origen.first.second
+    assert_kind_of Numeric, origen.last.first
+    assert_equal 6536, origen.last.first
+  end
+
+  # Final review, minor 5: a source value starting with "=" is text, never a
+  # formula; pinned here instead of relying on caxlsx's default.
+  test "a value that starts with = is written as text" do
+    origen = export_input([ [ "1", "TK1283-1", "KIT", "=1+1", "KIT", "REVO", "JUEGO" ] ], types: %i[string] * 7)
+
+    assert_equal "=1+1", origen.first[3]
+    assert_kind_of String, origen.first[3]
+  end
+
   test "metrics block with formulas" do
     m = export["Métricas"]
 

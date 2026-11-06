@@ -39,6 +39,28 @@ class Catalog::SourceWorkbookTest < ActiveSupport::TestCase
     assert_match "Número de parte", error.message
   end
 
+  # Final review, Important 3: with no parts no job runs, so the run page
+  # would wait forever.
+  test "rejects an Origen sheet with headers only" do
+    path = Rails.root.join("tmp/headers_only.xlsx")
+    package = Axlsx::Package.new
+    package.workbook.add_worksheet(name: "Origen") { |sheet| sheet.add_row Catalog::SourceWorkbook::COLUMNS.keys }
+    package.serialize(path.to_s)
+
+    error = assert_raises(Catalog::SourceWorkbook::InvalidFile) { Catalog::SourceWorkbook.read(path) }
+    assert_equal "La hoja Origen no tiene piezas.", error.message
+  end
+
+  # Final review, declined item: a .docx is a valid zip but not a workbook.
+  test "rejects a zip file that is not a workbook" do
+    path = Rails.root.join("tmp/document.docx")
+    FileUtils.rm_f(path)
+    Zip::File.open(path.to_s, create: true) { |zip| zip.get_output_stream("word/document.xml") { _1.write "<w:document/>" } }
+
+    error = assert_raises(Catalog::SourceWorkbook::InvalidFile) { Catalog::SourceWorkbook.read(path) }
+    assert_match "no es un Excel", error.message
+  end
+
   test "rejects a non-xlsx file" do
     assert_raises(Catalog::SourceWorkbook::InvalidFile) do
       Catalog::SourceWorkbook.read(file_fixture("not_excel.txt"))

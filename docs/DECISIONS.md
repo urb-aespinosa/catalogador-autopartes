@@ -490,3 +490,62 @@ Todas las consultas automáticas usaron el User-Agent del proyecto y una solicit
 - `Vpic.expand` deja de descartar las aplicaciones cuyo nombre vPIC no reconoce en ningún año. Las devuelve aparte, sin emitir su validación de "Modelo-año".
 - Esas aplicaciones pasan por el `Normalizer` como las demás.
 - `MarketResolver` les aplica la decisión 2: fila MEX nivel a en los años con ventas, con la evidencia INEGI en Fuentes, y "Modelo-año · no encontrado" en Validación para el resto de los años, con el mismo texto que hoy.
+
+## 2026-11-06 12:31 — D21. Equivalencias EPA inclusivas: "1500" es toda la línea ligera
+
+**Contexto:** al revisar `config/catalog/epa_models.yml` (Tarea 3 de la adenda). En la Tarea 5, EPA refuta un motor cuando ninguna configuración mapeada de ese modelo-año coincide con él, y la fila se elimina.
+
+**Decisión**
+- **Nombre genérico** (Silverado, Sierra, Tahoe, Escalade, CTS…): cuenta con toda la línea en EPA.
+  - Incluye variantes de tracción, códigos GM (C15/K15, C10/K10, C1500/K1500), Classic, Hybrid, XFE, LD, Cab Chassis y versiones deportivas (CTS-V, Z06).
+  - Nunca otros modelos que comparten una palabra (Escalade ESV/EXT, Yukon XL, TrailBlazer EXT, Envoy XL/XUV, City Express, Grand Am), ni versiones eléctricas.
+- **Nombre "1500":** cuenta con la misma línea ligera completa, menos las series que dicen otra capacidad.
+  - EPA solo evalúa vehículos ligeros y las pickups y vans HD están fuera de su alcance, así que toda serie de EPA de la línea es de clase 1500.
+  - Aquí la capacidad no se deduce del nombre del vehículo: sale de lo que EPA cubre.
+- **Nombre "2500", "3500" o "HD":** cuenta solo con las series que dicen esa capacidad. "1500/2500" cuenta para ambas.
+  - Si no hay ninguna serie así, no hay entrada: el modelo queda sin verificar en EPA, no refutado.
+- **Sin entrada:** los nombres solo mexicanos (Estaquitas, Ichivan) y los modelos que EPA no lista.
+
+**Por qué esta regla es distinta de la de INEGI (D20), que no infiere capacidad:**
+- **En INEGI,** una equivalencia faltante solo quita evidencia. La fila baja a nivel b o no tiene fila MEX, pero nada correcto se borra. Por eso INEGI es estricta: una equivalencia de más confirmaría ventas de otra versión.
+- **En EPA,** una equivalencia faltante borra filas correctas. Si "Silverado 1500" contara solo con las series que dicen "15", el 6.2L de 2019 quedaría refutado. Ese año EPA lo publica como "Silverado K10 4WD", y su serie "LD C15/K15" de 2019 es la generación anterior, solo con 5.3. Por eso EPA es inclusiva dentro de la misma línea.
+- **El criterio común es evitar el error que causa daño.** En INEGI el daño es confirmar algo falso; en EPA, borrar algo verdadero.
+
+**Control:** un test verifica que cada nombre de EPA del YAML existe en el extracto. Antes del commit, un reporte local lista las aplicaciones de `tmp/run2.xlsx` que este YAML refutaría, para revisarlas una por una.
+
+## 2026-11-06 12:48 — D22. EPA solo puede refutar un motor donde su cobertura de esa línea es completa
+
+**Contexto:** el reporte de refutaciones con las equivalencias de D21 (sobre `tmp/run2.xlsx`, 1,187 filas) dio 237 filas refutadas. Casi todas coinciden con la historia real de los motores. Por ejemplo:
+- Allure/LaCrosse 5.3L antes de 2008;
+- Silverado 1500 6.0L de 2014 en adelante;
+- Colorado 5.3L fuera de 2009–2012.
+
+Pero dos tipos de casos borraban filas correctas:
+- **Cobertura parcial de capacidades pesadas.** EPA solo evalúa la parte ligera de las 2500/3500 y de las líneas con versiones HD.
+  - Ejemplo: en 2007–2008 publica "Express 1500/2500 2WD" solo con 5.3. La Express 2500 con 6.0 pesaba más de lo que EPA evalúa, así que su 6.0 quedaba refutado aunque existió.
+  - Igual con la "Suburban" genérica 6.0L 2015–2020, que es la 2500 y no está en EPA después de 2013.
+- **Huecos en los datos de EPA.** El CTS-V 2009 (6.2L) existió, pero EPA lista el CTS-V solo desde 2010.
+
+**Decisión**
+- **`confirm_only` en `config/catalog/epa_models.yml`:**
+  - (a) nombres 2500, 3500 y HD;
+  - (b) nombres genéricos de líneas con versiones HD fuera de EPA: Silverado, Sierra, Suburban, Express y Savana.
+
+  Estos modelos confirman el motor y aportan combustible y evidencia, pero nunca borran. Si el motor no coincide, la fila se conserva y Validación registra `difiere`.
+- **`confirm_only_years`:** lista corta de excepciones revisadas. Cada una lleva modelo · año · motor (litros a un decimal y cilindros), para proteger solo el caso revisado, y su motivo. Se conservan como `difiere`, no como confirmadas.
+  - Cadillac CTS · 2009 · 6.2L/8: el CTS-V 2009 existió y EPA lo lista solo desde 2010.
+  - GMC Yukon XL 1500 · 2007 · 6.2L/8: la Yukon XL Denali 2007 tuvo el 6.2. EPA 2007 parece agrupar Denali y Denali XL como "Yukon Denali 1500 AWD", y lista Yukon XL 1500 con 6.2 a partir de 2008.
+- **Interfaz:** `Epa#refutes?(make:, model:, year:, liters:, cylinders:)`. La Tarea 5 la consulta antes de eliminar una fila.
+- **README, sección de limitaciones:** "EPA puede refutar un motor solo donde su cobertura de esa línea es completa".
+
+**Resultado del reporte** (`run2`, 1,187 filas):
+
+| Resultado | Filas |
+|---|---|
+| Motor confirmado | 662 |
+| Sin evidencia de EPA | 288 |
+| Refutadas (se eliminarán en la Tarea 5) | **169** (antes 237) |
+| Difiere, se conservan | **68** |
+
+- **Primera versión de las excepciones,** que era solo por modelo y año: también protegía el CTS 6.0L 2009, un motor que no existió ese año. Con la excepción por motor queda refutado.
+- **Lo que se pierde:** algunas refutaciones válidas, como la Express 3500 5.3L, quedan como `difiere` en lugar de borrarse. Es el error que no hace daño.

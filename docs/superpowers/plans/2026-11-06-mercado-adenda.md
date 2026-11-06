@@ -171,7 +171,9 @@
 - Modify: `app/services/catalog/market_resolver.rb`, `test/services/catalog/market_resolver_test.rb`
 
 **Interfaces:**
-- Consumes: `Epa#configurations`, `Epa#evidence_url`.
+- Consumes: `Epa#configurations`, `Epa#evidence_url`, `Epa#refutes?(make:, model:, year:, liters:, cylinders:)`.
+- **Ajuste D22 (2026-11-06 12:48):** un motor que no coincide solo elimina la fila si `refutes?` es true. Si no, la fila se conserva, con o sin fila USA según las reglas de nivel, y Validación registra `difiere` con los dos motores y la URL de EPA.
+  - Tests: `a confirm_only model keeps the row and records difiere` (Express 2500 6.0L 2007) y `a reviewed exception keeps only its engine` (CTS 2009: 6.2L se conserva y 6.0L se elimina).
 - Produces (lado USA, para cada aplicación con año):
   - **Coincidencia de motor:** `app.liters` **y** `app.cylinders` presentes; `config.displ.round(1) == app.liters.round(1) && config.cylinders == app.cylinders`.
   - `configurations` es nil → USA nivel b solo si el catálogo es USA; si no, no hay fila USA.

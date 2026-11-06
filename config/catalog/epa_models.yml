@@ -1,0 +1,461 @@
+# Equivalences (D19, D21, D22): our (make, model) → EPA fueleconomy.gov model
+# names (db/reference/epa/vehicles_scope.csv). Reviewed by the developer.
+#
+# Why completeness matters: EPA refutes an engine when none of the mapped
+# configurations of that model-year matches it (Task 5), so a mapping that
+# misses part of a model line would refute engines that did exist. A model
+# that is not here simply has no EPA evidence (no refutation).
+#
+# models (D21):
+# - Generic name (no capacity) → every EPA series of that line: drive
+#   variants (2WD/4WD/AWD), GM codes (C15/K15, C10/K10, C1500/K1500), Classic,
+#   Hybrid, XFE, LD, Cab Chassis, performance trims (CTS-V, Z06). Never other
+#   models that share a word (Escalade ESV/EXT, Yukon XL, TrailBlazer EXT,
+#   Envoy XL/XUV, City Express, Grand Am) nor electric versions.
+# - 1500 name → the same light-duty series. EPA only rates light-duty
+#   vehicles (heavy-duty 2500/3500 HD pickups and vans are out of its scope),
+#   so every EPA series of the line is 1500-class, except those that say
+#   another capacity ("Silverado 2500 2WD", "Express 2500 2WD Cargo").
+# - 2500 / 3500 / HD name → only the EPA series that say that capacity
+#   ("1500/2500" counts for both). None → no entry, so HD stays unverified.
+# - Mexican-only names (Estaquitas, Ichivan) and models EPA does not list
+#   (Hummer H2, Nissan Silvia, Terrano, 280ZX) have no entry.
+#
+# confirm_only / confirm_only_years (D22): EPA may refute an engine only where
+# its coverage of that line is complete. These entries confirm the engine and
+# supply fuel and evidence, but never delete a row: a mismatch keeps the row
+# and Validación records "difiere".
+#
+# Every name exists in the extract and every confirm_only entry is a mapped
+# model (checked by test/services/catalog/epa_test.rb).
+
+models:
+  Buick:
+    # EPA's name for 2005-2010.
+    Allure:
+      - Lacrosse/Allure
+    LaCrosse:
+      - Lacrosse/Allure
+      - Lacrosse/Allure AWD
+      - LaCrosse
+      - LaCrosse AWD
+      - LaCrosse eAssist
+    Rainier:
+      - Rainier 2WD
+      - Rainier AWD
+
+  Cadillac:
+    # CTS-V is the V8 trim of the CTS line (our 6.0/6.2 applications).
+    CTS:
+      - CTS
+      - CTS AWD
+      - CTS Sedan
+      - CTS Sedan AWD
+      - CTS V
+      - CTS Wagon
+      - CTS Wagon AWD
+      - CTS-V
+    # ESV and EXT are separate models.
+    Escalade:
+      - Escalade 2WD
+      - Escalade 4WD
+      - Escalade AWD
+      - Escalade Hybrid 2WD
+      - Escalade Hybrid 4WD
+      - Escalade V 4WD
+      - Escalade V AWD
+    # EPA lists the ESV separately only until 2015; later years have no evidence.
+    Escalade ESV:
+      - Escalade ESV 2WD
+      - Escalade ESV 4WD
+      - Escalade ESV AWD
+
+  Chevrolet:
+    # EPA only lists the Avalanche as "1500".
+    Avalanche: &avalanche
+      - Avalanche 1500 2WD
+      - Avalanche 1500 4WD
+      - Avalanche 1500 AWD
+    Avalanche 1500: *avalanche
+    Camaro:
+      - Camaro
+    Colorado:
+      - Colorado 2WD
+      - Colorado 4WD
+      - Colorado Cab Chassis 2WD
+      - Colorado Cab Chassis inc 2WD
+      - Colorado Cab Chassis inc 4WD
+      - Colorado Crew Cab 2WD
+      - Colorado Crew Cab 4WD
+    Corvette:
+      - Corvette
+      - Corvette E-RAY
+      - Corvette E-Ray
+      - Corvette Z06
+      - Corvette Z06 Carbon Aero
+      - Corvette ZR1
+    # "City Express" is a different van (compact).
+    Express:
+      - Express 1500 2WD Cargo
+      - Express 1500 2WD Conversion Cargo
+      - Express 1500 2WD Passenger
+      - Express 1500 AWD
+      - Express 1500 AWD Cargo
+      - Express 1500 AWD Conversion Cargo
+      - Express 1500 AWD Passenger
+      - Express 1500/2500 2WD
+      - Express 2500 2WD Cargo
+      - Express 2500 2WD Conversion Cargo
+      - Express 2500 2WD Passenger
+      - Express 3500 2WD Cargo
+      - Express 3500 2WD Passenger
+      - Express Cargo (Bi-fuel)
+      - Express Cargo (dedicated CNG)
+      - Express Passenger (Bi-fuel)
+      - Express Passenger (dedicated CNG)
+    Express 1500:
+      - Express 1500 2WD Cargo
+      - Express 1500 2WD Conversion Cargo
+      - Express 1500 2WD Passenger
+      - Express 1500 AWD
+      - Express 1500 AWD Cargo
+      - Express 1500 AWD Conversion Cargo
+      - Express 1500 AWD Passenger
+      - Express 1500/2500 2WD
+    Express 2500:
+      - Express 1500/2500 2WD
+      - Express 2500 2WD Cargo
+      - Express 2500 2WD Conversion Cargo
+      - Express 2500 2WD Passenger
+    Express 3500:
+      - Express 3500 2WD Cargo
+      - Express 3500 2WD Passenger
+    Impala:
+      - Impala
+      - Impala Bi-Fuel  (CNG)
+      - Impala Limited
+      - Impala Police
+      - Impala eAssist
+    Monte Carlo:
+      - Lumina/Monte Carlo
+      - Monte Carlo
+    # Generic and 1500: the whole light-duty line (EPA does not rate HD).
+    Silverado: &silverado
+      - Silverado 15 Hybrid 2WD
+      - Silverado 15 Hybrid 4WD
+      - Silverado 1500 2WD
+      - Silverado 1500 4WD
+      - Silverado 1500 AWD
+      - Silverado 2WD
+      - Silverado 4WD
+      - Silverado 4WD TrailBoss
+      - Silverado 4WD ZR2
+      - Silverado C10 2WD
+      - Silverado C10 Cab Chassis 2WD
+      - Silverado C10 XFE 2WD
+      - Silverado C15 2WD
+      - Silverado C15 Cab Chassis 2WD
+      - Silverado C15 XFE 2WD
+      - Silverado Cab Chassis 2WD
+      - Silverado Cab Chassis 4WD
+      - Silverado Classic 15 Hybrid 2WD
+      - Silverado Classic 15 Hybrid 4WD
+      - Silverado Classic 1500 2WD
+      - Silverado Classic 1500 4WD
+      - Silverado K10 4WD
+      - Silverado K10 4WD TrailBoss
+      - Silverado K10 Cab Chassis 4WD
+      - Silverado K15 4WD
+      - Silverado K15 Cab Chassis 4WD
+      - Silverado LD C15 2WD
+      - Silverado LD K15 4WD
+      - Silverado Mud Terrain Tires 4WD
+      - Silverado SS 1500 AWD
+    Silverado 1500: *silverado
+    # "LTD" in our name is the 2019-2022 carry-over; EPA names it "LD" (2019)
+    # and folds it into the line after. Same light-duty line.
+    Silverado 1500 LTD: *silverado
+    Silverado 2500:
+      - Silverado 2500 2WD
+      - Silverado 2500 2WD (Bifuel)
+    Silverado 2500 HD:
+      - Silverado 2500 HD 2WD
+      - Silverado 2500 HD 2WD CNG
+      - Silverado 2500 HD 4WD CNG
+    # Silverado 3500 / 3500 HD: no EPA series (heavy duty) → no entry.
+    Suburban:
+      - Suburban 1500 2WD
+      - Suburban 1500 4WD
+      - Suburban 1500 AWD
+      - Suburban 2500 2WD
+      - Suburban 2500 4WD
+      - Suburban 2WD
+      - Suburban 4WD
+      - Suburban C10 2WD
+      - Suburban C1500 2WD
+      - Suburban K10 4WD
+      - Suburban K1500 4WD
+    Suburban 1500:
+      - Suburban 1500 2WD
+      - Suburban 1500 4WD
+      - Suburban 1500 AWD
+      - Suburban 2WD
+      - Suburban 4WD
+      - Suburban C10 2WD
+      - Suburban C1500 2WD
+      - Suburban K10 4WD
+      - Suburban K1500 4WD
+    Suburban 2500:
+      - Suburban 2500 2WD
+      - Suburban 2500 4WD
+    # Suburban 3500 HD: no EPA series → no entry.
+    Tahoe:
+      - Tahoe 1500 2WD
+      - Tahoe 1500 4WD
+      - Tahoe 1500 AWD
+      - Tahoe 1500 XFE 2WD
+      - Tahoe 2WD
+      - Tahoe 4WD
+      - Tahoe C10 2WD
+      - Tahoe C1500 2WD
+      - Tahoe Hybrid 2WD
+      - Tahoe Hybrid 4WD
+      - Tahoe K10 4WD
+      - Tahoe K1500 4WD
+    # TrailBlazer EXT is a separate model.
+    Trailblazer:
+      - TrailBlazer 2WD
+      - TrailBlazer 4WD
+      - TrailBlazer AWD
+
+  GMC:
+    Canyon:
+      - Canyon 2WD
+      - Canyon 4WD
+      - Canyon Cab Chassis 2WD
+      - Canyon Cab Chassis Inc 2WD
+      - Canyon Cab Chassis Inc 4WD
+      - Canyon Crew Cab 2WD
+      - Canyon Crew Cab 4WD
+    # Envoy XL / XUV are separate models.
+    Envoy:
+      - Envoy 2WD
+      - Envoy 4WD
+    Savana:
+      - Savana (cargo) (Bi-fuel)
+      - Savana 15/25 2WD Conversion (cargo)
+      - Savana 15/25 AWD Conversion (cargo)
+      - Savana 1500  2WD Conversion (cargo)
+      - Savana 1500  AWD (cargo)
+      - Savana 1500  AWD Conversion (cargo)
+      - Savana 1500 2WD (Passenger)
+      - Savana 1500 2WD (cargo)
+      - Savana 1500 2WD Conversion (cargo)
+      - Savana 1500 AWD (Passenger)
+      - Savana 1500 AWD (cargo)
+      - Savana 1500 AWD Conversion (cargo)
+      - Savana 1500/2500  2WD (Passenger)
+      - Savana 1500/2500 2WD (Passenger)
+      - Savana 1500/2500 2WD (cargo)
+      - Savana 1500/2500 2WD (passenger)
+      - Savana 1500/2500 AWD (cargo)
+      - Savana 2500 2WD (Passenger)
+      - Savana 2500 2WD (cargo)
+      - Savana 2500 2WD Conversion (cargo)
+      - Savana 3500 2WD (Passenger)
+      - Savana 3500 2WD (cargo)
+      - Savana Cargo (dedicated CNG)
+      - Savana Passenger (Bi-fuel)
+      - Savana Passenger (dedicated CNG)
+    # "15/25" counts for both 1500 and 2500.
+    Savana 1500:
+      - Savana 15/25 2WD Conversion (cargo)
+      - Savana 15/25 AWD Conversion (cargo)
+      - Savana 1500  2WD Conversion (cargo)
+      - Savana 1500  AWD (cargo)
+      - Savana 1500  AWD Conversion (cargo)
+      - Savana 1500 2WD (Passenger)
+      - Savana 1500 2WD (cargo)
+      - Savana 1500 2WD Conversion (cargo)
+      - Savana 1500 AWD (Passenger)
+      - Savana 1500 AWD (cargo)
+      - Savana 1500 AWD Conversion (cargo)
+      - Savana 1500/2500  2WD (Passenger)
+      - Savana 1500/2500 2WD (Passenger)
+      - Savana 1500/2500 2WD (cargo)
+      - Savana 1500/2500 2WD (passenger)
+      - Savana 1500/2500 AWD (cargo)
+    Savana 2500:
+      - Savana 15/25 2WD Conversion (cargo)
+      - Savana 15/25 AWD Conversion (cargo)
+      - Savana 1500/2500  2WD (Passenger)
+      - Savana 1500/2500 2WD (Passenger)
+      - Savana 1500/2500 2WD (cargo)
+      - Savana 1500/2500 2WD (passenger)
+      - Savana 1500/2500 AWD (cargo)
+      - Savana 2500 2WD (Passenger)
+      - Savana 2500 2WD (cargo)
+      - Savana 2500 2WD Conversion (cargo)
+    Savana 3500:
+      - Savana 3500 2WD (Passenger)
+      - Savana 3500 2WD (cargo)
+    # Generic and 1500: the whole light-duty line (EPA does not rate HD).
+    Sierra: &sierra
+      - Sierra 15 Hybrid 2WD
+      - Sierra 15 Hybrid 4WD
+      - Sierra 1500 2WD
+      - Sierra 1500 4WD
+      - Sierra 1500 AWD
+      - Sierra 2WD
+      - Sierra 4WD
+      - Sierra 4WD AT4
+      - Sierra 4WD AT4X
+      - Sierra C10 2WD
+      - Sierra C10 Cab Chassis 2WD
+      - Sierra C10 XFE 2WD
+      - Sierra C15 2WD
+      - Sierra C15 Cab Chassis 2WD
+      - Sierra C15 XFE 2WD
+      - Sierra Cab Chassis 2WD
+      - Sierra Cab Chassis 4WD
+      - Sierra Classic 15 Hybrid 2WD
+      - Sierra Classic 15 Hybrid 4WD
+      - Sierra Classic 1500 2WD
+      - Sierra Classic 1500 4WD
+      - Sierra Classic 1500 AWD
+      - Sierra Denali 1500 AWD
+      - Sierra K10 4WD
+      - Sierra K10 4WD AT4
+      - Sierra K10 Cab Chassis 4WD
+      - Sierra K15 4WD
+      - Sierra K15 AWD
+      - Sierra K15 Cab Chassis 4WD
+      - Sierra LTD C15 2WD
+      - Sierra LTD K15 4WD
+      - Sierra Mud Terrain Tires 4WD
+    Sierra 1500: *sierra
+    Sierra 1500 Limited: *sierra
+    Sierra 2500:
+      - Sierra 2500 2WD
+    Sierra 2500 HD:
+      - Sierra 2500 HD 2WD CNG
+      - Sierra 2500 HD 4WD CNG
+      - Sierra 2500 Hd 2WD
+    # Sierra 3500 HD: no EPA series → no entry.
+    # Yukon XL is a separate model.
+    Yukon:
+      - Yukon 1500 2WD
+      - Yukon 1500 4WD
+      - Yukon 1500 AWD
+      - Yukon 1500 Hybrid 2WD
+      - Yukon 1500 Hybrid 4WD
+      - Yukon 1500 XFE 2WD
+      - Yukon 2WD
+      - Yukon 4WD
+      - Yukon C10 2WD
+      - Yukon C1500 2WD
+      - Yukon Denali 1500 AWD
+      - Yukon Denali 1500 Hybrid 4WD
+      - Yukon Denali K10 AWD
+      - Yukon K10 4WD
+      - Yukon K1500 4WD
+    Yukon XL:
+      - Yukon C1500 XL 2WD
+      - Yukon Denali XL 1500 AWD
+      - Yukon K1500 XL 4WD
+      - Yukon XL 1500 2WD
+      - Yukon XL 1500 4WD
+      - Yukon XL 1500 AWD
+      - Yukon XL 2500 2WD
+      - Yukon XL 2500 4WD
+      - Yukon XL 2WD
+      - Yukon XL 4WD
+      - Yukon XL C10 2WD
+      - Yukon XL K10 4WD
+      - Yukon XL K10 AWD
+    Yukon XL 1500:
+      - Yukon C1500 XL 2WD
+      - Yukon Denali XL 1500 AWD
+      - Yukon K1500 XL 4WD
+      - Yukon XL 1500 2WD
+      - Yukon XL 1500 4WD
+      - Yukon XL 1500 AWD
+      - Yukon XL 2WD
+      - Yukon XL 4WD
+      - Yukon XL C10 2WD
+      - Yukon XL K10 4WD
+      - Yukon XL K10 AWD
+    Yukon XL 2500:
+      - Yukon XL 2500 2WD
+      - Yukon XL 2500 4WD
+
+  Isuzu:
+    Ascender:
+      - Ascender 2WD
+      - Ascender 4WD
+      - Ascender 5-passenger 2WD
+      - Ascender 5-passenger 4WD
+      - Ascender 7-passenger 2WD
+      - Ascender 7-passenger 4WD
+
+  Nissan:
+    # The D21 / "Pickup" (Hardbody) is "Truck" in EPA. Estaquitas and Ichivan
+    # are Mexican-only bodies → no entry.
+    D21: &nissan_truck
+      - Truck 2WD
+      - Truck 4WD
+    Pickup: *nissan_truck
+    Stanza:
+      - Stanza
+
+  Pontiac:
+    G8:
+      - G8
+    # Grand Am is a different model.
+    Grand Prix:
+      - Grand Prix
+    GTO:
+      - GTO
+
+  Saab:
+    9-7X:
+      - 9-7X AWD
+
+# D22 (a): 2500 / 3500 / HD names. EPA rates only the light-duty subset of
+# these capacities, so a missing engine may belong to a heavier version.
+# D22 (b): generic names of lines with HD versions EPA does not rate.
+confirm_only:
+  Chevrolet:
+    - Express          # (b)
+    - Express 2500     # (a)
+    - Express 3500     # (a)
+    - Silverado        # (b)
+    - Silverado 2500   # (a)
+    - Silverado 2500 HD # (a)
+    - Suburban         # (b)
+    - Suburban 2500    # (a)
+  GMC:
+    - Savana           # (b)
+    - Savana 2500      # (a)
+    - Savana 3500      # (a)
+    - Sierra           # (b)
+    - Sierra 2500      # (a)
+    - Sierra 2500 HD   # (a)
+    - Yukon XL 2500    # (a)
+
+# D22: reviewed gaps in EPA's data (the engine existed but EPA does not list
+# it), each keyed by model · year · engine so it protects only that case, with
+# its reason. The row is kept as "difiere", never as confirmed.
+confirm_only_years:
+  - make: Cadillac
+    model: CTS
+    year: 2009
+    liters: 6.2
+    cylinders: 8
+    reason: "CTS-V 2009 (6.2L V8 supercharged) existed; EPA lists the CTS-V only from 2010"
+  - make: GMC
+    model: Yukon XL 1500
+    year: 2007
+    liters: 6.2
+    cylinders: 8
+    reason: "Yukon XL Denali 2007 had the 6.2L; EPA 2007 seems to group Denali and Denali XL as \"Yukon Denali 1500 AWD\" (it lists Yukon XL 1500 with 6.2 from 2008)"

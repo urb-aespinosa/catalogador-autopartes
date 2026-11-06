@@ -1,2 +1,5 @@
 #!/usr/bin/env ruby
+# Runs the web server with the Solid Queue supervisor inside Puma, so the
+# per-part jobs run without a separate process.
+ENV["SOLID_QUEUE_IN_PUMA"] ||= "1"
 exec "./bin/rails", "server", *ARGV

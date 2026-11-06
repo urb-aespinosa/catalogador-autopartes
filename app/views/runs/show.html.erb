@@ -1,0 +1,11 @@
+<% content_for :title, "Corrida #{@run.id}" %>
+<%# Broadcasts sent before the subscription is confirmed are lost, so once it
+    is confirmed the page asks for the current state (catch-up controller). %>
+<%= turbo_stream_from @run, data: { controller: "catch-up", catch_up_url_value: progress_run_path(@run) } %>
+
+<main class="page">
+  <h1>Corrida <%= @run.id %></h1>
+  <p>Cada pieza se actualiza sola mientras se consulta su fuente oficial.</p>
+
+  <%= render "runs/progress", run: @run %>
+</main>

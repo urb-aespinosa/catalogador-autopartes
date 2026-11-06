@@ -1,0 +1,12 @@
+# Source attribute name → Clase and Atributo in Spanish (D7). Names that
+# Fraco already publishes in Spanish map to themselves.
+Length: { klass: Longitud, name: Longitud }
+Lifter Type: { klass: Tipo, name: Tipo de puntería }
+Material: { klass: Material, name: Material }
+Maximum Outside Diameter: { klass: Diámetro, name: Diámetro exterior máximo }
+Roller: { klass: Rodillo, name: Rodillo }
+Número de válvulas: { klass: Número, name: Número de válvulas }
+Diámetro: { klass: Diámetro, name: Diámetro }
+Carrera: { klass: Carrera, name: Carrera }
+Junta Cabeza: { klass: Material, name: Junta Cabeza }
+Sobremedida: { klass: Sobremedida, name: Sobremedida }

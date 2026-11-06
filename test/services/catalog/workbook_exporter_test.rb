@@ -1,0 +1,196 @@
+require "test_helper"
+
+class Catalog::WorkbookExporterTest < ActiveSupport::TestCase
+  setup do
+    stub_all_sources_from_fixtures
+    @path = Rails.root.join("tmp/export_test_#{Process.pid}.xlsx")
+  end
+
+  teardown { FileUtils.rm_f(@path) }
+
+  def export
+    @export ||= begin
+      run = Catalog::Pipeline.run(file_fixture("data_prueba_tecnica.xlsx"))
+      Catalog::WorkbookExporter.call(run, @path)
+      workbook_rows(@path)
+    end
+  end
+
+  def header(sheet) = export[sheet].first
+  def rows(sheet) = export[sheet].drop(1)
+
+  test "sheet names in order" do
+    export
+    assert_equal %w[Origen Métricas Aplicaciones Intercambios Atributos Catálogo Fuentes Validación], sheet_names(@path)
+  end
+
+  test "headers match the evaluator example exactly" do
+    example = workbook_rows(file_fixture("ejemplo_prueba_tecnica.xlsx"))
+
+    %w[Origen Aplicaciones Intercambios Atributos Catálogo].each do |sheet|
+      assert_equal example[sheet].first.compact, header(sheet), sheet
+    end
+  end
+
+  test "headers of the extra sheets" do
+    assert_equal [ "Referencia", "Tipo de dato", "Origen", "URL", "Valor original" ], header("Fuentes")
+    assert_equal [ "Referencia", "Campo", "Valor ERP", "Valor fuente", "URL", "Estado" ], header("Validación")
+  end
+
+  test "Origen copies the input rows" do
+    assert_equal [ 6536, "FSX-5840301", "JUEGO DE EMPAQUES" ], rows("Origen").first.values_at(0, 1, 2)
+    assert_equal 5, rows("Origen").size
+  end
+
+  # Builds an ERP workbook with the given Origen rows (REVO: no adapter, so no
+  # network) and exports it.
+  def export_input(rows, types:)
+    input = Rails.root.join("tmp/input_#{Process.pid}.xlsx")
+    package = Axlsx::Package.new
+    package.workbook.add_worksheet(name: "Origen") do |sheet|
+      sheet.add_row Catalog::SourceWorkbook::COLUMNS.keys
+      rows.each { sheet.add_row _1, types: types }
+    end
+    package.serialize(input.to_s)
+    Catalog::WorkbookExporter.call(Catalog::Pipeline.run(input), @path)
+    workbook_rows(@path)["Origen"].drop(1)
+  ensure
+    FileUtils.rm_f(input)
+  end
+
+  # Final review, Important 4: Origen reproduces the input, cell types included.
+  test "Origen keeps each cell's original type" do
+    types = %i[string string string string string string string]
+    numeric_code = [ :integer ] + types.drop(1)
+    origen = export_input([ [ "00451", "44338", "PISTONES", "X", "PISTONES", "REVO", "PZA" ] ], types: types) +
+             export_input([ [ 6536, "TK1283-1", "KIT", "X", "KIT", "REVO", "JUEGO" ] ], types: numeric_code)
+
+    assert_equal [ "00451", "44338" ], origen.first.first(2)
+    assert_kind_of String, origen.first.second
+    assert_kind_of Numeric, origen.last.first
+    assert_equal 6536, origen.last.first
+  end
+
+  # Final review, minor 5: a source value starting with "=" is text, never a
+  # formula; pinned here instead of relying on caxlsx's default.
+  test "a value that starts with = is written as text" do
+    origen = export_input([ [ "1", "TK1283-1", "KIT", "=1+1", "KIT", "REVO", "JUEGO" ] ], types: %i[string] * 7)
+
+    assert_equal "=1+1", origen.first[3]
+    assert_kind_of String, origen.first[3]
+  end
+
+  test "metrics block with formulas" do
+    m = export["Métricas"]
+
+    assert_equal "Catálogo Bonaparte - Refaccionaria Trópico de Cáncer", m[0][0]
+    assert_equal [ "Referencias:", 5 ], m[1].first(2)
+    assert_equal [ "Aplicaciones", rows("Aplicaciones").size ], m[3].first(2)
+    assert_equal [ "Origen", 0 ], m[4].first(2)
+    assert_equal [ "Incrementos", formula("B4-B5") ], m[5].first(2)
+    assert_equal [ "Intercambios", rows("Intercambios").size ], m[7].first(2)
+    assert_equal [ "Incrementos", formula("B8-B9") ], m[9].first(2)
+    assert_equal [ "Atributos", rows("Atributos").size ], m[11].first(2)
+    assert_equal [ "Incrementos", formula("B12-B13") ], m[13].first(2)
+  end
+
+  # Found in manual verification: caxlsx escaped "=B4-B5" and stored it as
+  # inline text, so Excel showed the text instead of the result.
+  test "Incrementos cells are stored as real formulas, not text" do
+    export
+    xml = Zip::File.open(@path.to_s) { |zip| zip.read("xl/worksheets/sheet2.xml") }
+
+    m = export["Métricas"]
+    { "B6" => 3, "B10" => 7, "B14" => 11 }.each do |ref, total_row|
+      cell = Nokogiri::XML(xml).remove_namespaces!.at_xpath("//c[@r='#{ref}']")
+      assert cell.at_xpath("f"), "#{ref} should have an <f> element: #{cell}"
+      assert_not_equal "inlineStr", cell["t"], ref
+      # Cached result, for readers that do not recalculate (Roo, previews).
+      assert_equal (m[total_row][1] - m[total_row + 1][1]).to_s, cell.at_xpath("v")&.text, ref
+    end
+  end
+
+  def formula(expression) = WorkbookReader::Formula.new(expression)
+
+  test "numeric cells are numbers and text stays text" do
+    row = rows("Aplicaciones").find { _1[0] == "FSX-5840301" }
+
+    assert_kind_of Integer, row[7]   # Año
+    assert_kind_of Float, row[8]     # Litros
+    assert_equal [ "FRACO", "JUEGO DE EMPAQUES DE MOTOR", nil, "Nissan" ], row.values_at(1, 2, 3, 4)
+    assert_equal "MEX", row[14]
+  end
+
+  test "rows follow the source order, then a total order inside each part" do
+    references = rows("Aplicaciones").map(&:first).uniq
+    assert_equal references, %w[FSX-5840301 HL-7025S RM-152 SP26-329R/L+20] & references
+
+    fraco = rows("Aplicaciones").select { _1[0] == "FSX-5840301" }
+    assert_equal fraco.sort_by { [ _1[4].to_s, _1[5].to_s, _1[6].to_s, _1[7].to_i ] }, fraco
+  end
+
+  test "an item without source still appears in Catálogo with the minimum" do
+    revo = rows("Catálogo").find { _1[0] == "TK1283-1" }
+
+    assert_equal [ "TK1283-1", "REVO", nil, nil, nil, "KIT DE DISTRIBUCIÓN", nil ], revo
+  end
+
+  test "Catálogo has taxonomy and the template description" do
+    fraco = rows("Catálogo").find { _1[0] == "FSX-5840301" }
+
+    assert_equal [ "Vehículo ligero", "MOTOR", "JUNTAS Y SISTEMAS DE SELLADO", "JUEGO DE EMPAQUES DE MOTOR" ], fraco.values_at(2, 3, 4, 5)
+    assert fraco[6].start_with?("Juego de empaques de motor para sellar las uniones del motor. Número de válvulas: 12.")
+  end
+
+  test "Atributos follow the product order with translated values" do
+    lifters = rows("Atributos").select { _1[0] == "HL-7025S" }
+
+    assert_equal [ "Tipo de puntería", "Rodillo", "Material", "Longitud", "Diámetro exterior máximo" ], lifters.map { _1[4] }
+    assert_equal [ "Longitud", "Longitud", "mm", 98.55 ], lifters.find { _1[4] == "Longitud" }.values_at(3, 4, 5, 6)
+  end
+
+  test "Fuentes traces every row to its URL, with evidence and original values" do
+    fuentes = rows("Fuentes")
+
+    assert_includes fuentes.map { _1.values_at(0, 1, 2) }, [ "HL-7025S", "atributo", "oficial" ]
+    assert_includes fuentes.map { _1.values_at(0, 1, 4) }, [ "HL-7025S", "atributo", "3.880 IN" ]
+    assert fuentes.any? { _1[0] == "HL-7025S" && _1[2] == "verificación NHTSA vPIC" && _1[3].start_with?("https://vpic.nhtsa.dot.gov") }
+    assert_includes fuentes.map { _1.values_at(0, 2) }, [ "SP26-329R/L+20", "número de parte" ]
+    assert_equal fuentes.uniq, fuentes
+  end
+
+  test "Fuentes uses the third element of an evidence as its original value" do
+    app = Catalog::Records::Application.new(
+      **Catalog::Records::Application.members.index_with(nil), manufacturer: "Nissan", model: "Pickup", year: 2010,
+      market: "MEX", url: "https://fraco/x", origin: "oficial", original: "PICK UP 10/10",
+      evidence_urls: [ [ "mercado MEX: ventas INEGI RAIAVL", "https://inegi", "Pickup Largo · 2010 · 120 unidades" ],
+                       [ "mercado según catálogo", "https://fraco/x" ] ]
+    )
+    run = Run.create!
+    run.source_items.create!(position: 0, part_number: "FSX-1", manufacturer: "FRACO", item_group: "JUEGO DE EMPAQUES", status: "done", product: "P",
+                             result: Catalog::Records::ItemResult.new(product: "P", applications: [ app ], interchanges: [], attributes: [], validations: []).to_h)
+    Catalog::WorkbookExporter.call(run, @path)
+
+    fuentes = workbook_rows(@path)["Fuentes"].drop(1).map { _1.values_at(2, 3, 4) }
+    assert_includes fuentes, [ "mercado MEX: ventas INEGI RAIAVL", "https://inegi", "Pickup Largo · 2010 · 120 unidades" ]
+    assert_includes fuentes, [ "mercado según catálogo", "https://fraco/x", "PICK UP 10/10" ]
+  end
+
+  test "Validación reports source status per part" do
+    validacion = rows("Validación")
+
+    assert_includes validacion.map { _1.values_at(0, 1, 5) }, [ "TK1283-1", "Fuente", "sin fuente configurada" ]
+    assert_includes validacion.map { _1.values_at(0, 1, 2, 5) }, [ "HL-7025S", "Unidad", "PZA", "difiere" ]
+  end
+
+  test "interchange kind is OEM for vehicle makers" do
+    run = Run.create!
+    item = run.source_items.create!(position: 0, part_number: "DM-152", manufacturer: "TECH OIL PUMPS", item_group: "BOMBA DE ACEITE", status: "done", product: "BOMBA DE ACEITE DEL MOTOR",
+                                    result: Catalog::Records::ItemResult.new(product: "BOMBA DE ACEITE DEL MOTOR", applications: [], attributes: [], validations: [],
+                                      interchanges: [ Catalog::Records::Interchange.new(number: "15010-F450A", brand: "Nissan", kind: "OEM", url: "u", origin: "oficial") ]).to_h)
+    Catalog::WorkbookExporter.call(run, @path)
+
+    assert_equal [ "DM-152", "TECH OIL PUMPS", "BOMBA DE ACEITE DEL MOTOR", "15010-F450A", "Nissan", "OEM" ], workbook_rows(@path)["Intercambios"][1]
+    assert item.persisted?
+  end
+end

@@ -1,0 +1,29 @@
+# Model names used ONLY to ask NHTSA vPIC (D14). The workbook keeps the
+# source's name. Capacity suffixes only (1500, 2500, 3500, HD); no alias for
+# "Classic" variants or market names (Cheyenne, Sonora, Express Pasajeros):
+# those go to Validación. Reviewed by the developer.
+Chevrolet:
+  Avalanche 1500: Avalanche
+  Express 1500: Express
+  Express 2500: Express
+  Express 3500: Express
+  Silverado 1500: Silverado
+  Silverado 1500 LTD: Silverado LTD
+  Silverado 2500: Silverado
+  Silverado 2500 HD: Silverado
+  Silverado 3500: Silverado
+  Silverado 3500 HD: Silverado
+  Suburban 1500: Suburban
+  Suburban 2500: Suburban
+  Suburban 3500 HD: Suburban
+GMC:
+  Savana 1500: Savana
+  Savana 2500: Savana
+  Savana 3500: Savana
+  Sierra 1500: Sierra
+  Sierra 1500 Limited: Sierra Limited
+  Sierra 2500: Sierra
+  Sierra 2500 HD: Sierra
+  Sierra 3500 HD: Sierra
+  Yukon XL 1500: Yukon XL
+  Yukon XL 2500: Yukon XL

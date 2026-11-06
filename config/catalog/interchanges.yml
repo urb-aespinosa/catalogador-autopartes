@@ -1,0 +1,12 @@
+# Interchange equivalences confirmed by an official source (D9, D11). Only
+# these activate a "vía intercambio" complement. Each entry:
+#
+#   - part: RM-152           # our part number
+#     number: M152           # the other brand's part number
+#     brand: Melling         # the other brand
+#     adapter: Melling       # Sources::<adapter> that reads that brand's catalog
+#     url: https://...       # official page that states the equivalence
+#
+# Research on 2026-11-05 (docs/DECISIONS.md) found no official confirmation
+# for RM-152 = Melling M152 nor for TK1283-1 = Cloyes 9-0511S.
+[]

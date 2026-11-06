@@ -1,0 +1,27 @@
+# Provenance of the EPA fueleconomy.gov bulk snapshot (D19).
+# Downloaded with the project User-Agent in one request (HEAD check first, then GET).
+file: vehicles.csv.zip
+sha256: 1d553896a77898f6cf47128281337af268df053c90dc1365891c7c8abff82c82
+bytes: 2228192
+source_url: https://www.fueleconomy.gov/feg/epadata/vehicles.csv.zip
+documentation: https://www.fueleconomy.gov/feg/ws/index.shtml#vehicle
+title: "Fuel Economy Data — vehicles.csv"
+publisher: U.S. Department of Energy / U.S. Environmental Protection Agency (fueleconomy.gov)
+last_modified: "Wed, 04 Nov 2026 14:31:23 GMT"
+coverage: "model years 1984-2027, 50,647 rows (one per EPA vehicle configuration)"
+downloaded_at: "2026-11-06 11:59:38 (CDMX)"
+downloaded_by: "curl, User-Agent: catalogador-autopartes/1.0 (prueba tecnica)"
+filters: none (complete bulk file)
+contents:
+  - vehicles.csv  # 84 columns, header row
+columns_used: [year, make, model, id, displ, cylinders, fuelType, atvType]
+extract:
+  file: vehicles_scope.csv
+  rows: 12635
+  built_by: bin/rails catalog:epa:filter (Catalog::EpaVehiclesFilter)
+  rule: "make in [Buick, Cadillac, Chevrolet, GMC, Hummer, Isuzu, Nissan, Pontiac, Saab]; columns selected by name; values verbatim; total sort (year, id, displ, cylinders numeric)"
+  check: test/services/catalog/epa_vehicles_filter_test.rb regenerates it from the zip and compares sha256
+notes:
+  - EPA has no trim level and excludes heavy-duty pickups (2500/3500 HD); vPIC covers their existence.
+  - Model names are EPA's own ("Silverado C15 2WD", "Lacrosse/Allure"); they are mapped in db/dictionaries/epa_models.yml.
+  - The file is updated as new model years are added, so this snapshot is pinned for determinism; a newer download is a new snapshot.

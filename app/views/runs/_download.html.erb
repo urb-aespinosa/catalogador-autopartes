@@ -1,0 +1,7 @@
+<div id="download">
+  <% if run.output.attached? %>
+    <%= link_to "Descargar Excel", rails_blob_path(run.output, disposition: "attachment"), class: "button" %>
+  <% else %>
+    <p class="waiting">Procesando… el botón de descarga aparece al terminar.</p>
+  <% end %>
+</div>

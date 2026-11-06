@@ -1061,6 +1061,23 @@ end
 
 ---
 
+### Task 15b: Time-box — intercambios del ERP confirmados por aplicación (D16, 30 min de investigación)
+
+- [ ] **Step 1:** Buscar en los catálogos oficiales, **sin credenciales incrustadas**:
+  - DC Gaskets `catalogo.dcp.com.mx` (FS-001225);
+  - Quebec / TF Victor (QJC20G, JC20);
+  - Moresa (83-301);
+  - Elgin (HL7011).
+
+  Un número cuenta como confirmado si existe y su aplicación es el mismo motor y rango de años que nuestra pieza.
+- [ ] **Step 2:** Registrar el resultado en `docs/DECISIONS.md` con la hora.
+- [ ] **Step 3 (solo si hay confirmaciones legibles sin navegador):**
+  - adaptador por marca, con fixtures y tests;
+  - una fila en Intercambios por número confirmado;
+  - dos URLs en Fuentes: la de nuestra pieza y la del otro catálogo.
+
+  Lo que no se confirma queda en Validación.
+
 ### Task 16: Snapshots para la entrega, README y sesión de verificación
 
 **Files:**
@@ -1078,6 +1095,45 @@ end
   - `FORCE_REFRESH`;
   - el approach en una página, apoyándote en la sección 0 del spec;
   - limitaciones conocidas: submodelos (D3); vPIC confirma modelo + año, no motor (D11); estado de RM-152 y TK1283-1.
+  - por qué la hoja **Intercambios** sale con pocas filas: las equivalencias no tienen confirmación oficial (D9). Cada número aparece en Validación con su motivo (D14).
+  - alias de capacidad para vPIC: qué son y que en el Excel se conserva el nombre de Elgin (D14).
+  - limitación conocida (D14): vPIC confirma línea de modelo + año, no la versión de carga (1500/2500/3500). Pueden aparecer combinaciones de versión y año que no existieron (por ejemplo, Express 1500 después de 2014 o Suburban 2500 después de 2013). Ninguna fuente oficial gratuita publica años por versión. La aplicación sigue respaldada por Elgin.
+  - `poppler-utils` también en el `Dockerfile` (D14; pendiente menor del revisor).
+  - Fabricantes soportados (`Sources::Registry`: ELGIN, FRACO, REXITE, SAFETY) (D18).
+  - Una marca sin adaptador sale con lo mínimo en Catálogo, y en Validación con Estado `sin fuente configurada`, distinto de `no encontrado` (D18).
+  - Cómo agregar un adaptador nuevo, en pasos: clase en `app/services/sources/` que devuelve `Sources::Result`; registro en `Sources::Registry::ADAPTERS`; fixtures de snapshots y tests sin red; diccionarios de normalización si hacen falta (D18).
+  - **Adenda de mercado (D19–D22, Tarea 7 de la adenda).** `README.md` ya tiene la sección "Limitaciones conocidas" con la verificación de motor de EPA y los 6 hallazgos menores de la revisión; integrarla, no reescribirla. Agregar:
+    - **Mercado por niveles, por mercado:**
+      - MEX nivel a = ventas INEGI > 0 en el mismo año calendario;
+      - USA nivel a = EPA lista el modelo-año con el motor;
+      - nivel b "según catálogo" = solo el mercado del propio catálogo;
+      - una fila por mercado y Validación con el nivel.
+    - **Rol de cada fuente:**
+      - vPIC confirma que el modelo existió ese año (también HD);
+      - EPA verifica motor y combustible donde tiene cobertura;
+      - INEGI confirma ventas en México.
+      - Ninguna es fuente de aplicaciones.
+    - **Procedencia de los datos de referencia:**
+      - `db/reference/inegi/` y `db/reference/epa/`, con su `.yml`;
+      - las tareas `catalog:inegi:filter` y `catalog:epa:filter`;
+      - los tests que regeneran los extractos y comparan su sha256.
+    - **Equivalencias revisadas:**
+      - `inegi_models.yml` (D20: la capacidad nunca se infiere);
+      - `epa_models.yml` (D21: inclusiva; D22: `confirm_only` por años y excepciones por modelo · año · motor);
+      - la asimetría: en INEGI falta evidencia, en EPA se borrarían filas, así que se evita el error que hace daño.
+    - **D20:** los nombres mexicanos de Elgin (Cheyenne, Sonora, Express Pasajeros, Express Cargo) entran solo como MEX nivel a, en los años con ventas.
+    - **Las 6 limitaciones de la adenda (§6):**
+      1. año de venta contra año modelo;
+      2. MEX sin verificación de motor;
+      3. EPA sin HD ni modelos solo mexicanos;
+      4. INEGI desde 2005;
+      5. "General Motors" es un grupo;
+      6. Submodelo vacío.
+
+      Además, la Suburban queda `confirm_only` sin límite de años por falta de fuente (D22).
+    - **Submodelo y estrategia para producción (adenda §7):** una base de vehículos licenciada (VCdb de Auto Care Association, con submodelo y motor por año y mercado) o acuerdos de datos con los fabricantes.
+    - **Ejemplo de calidad de datos de origen:** la descripción del ERP de HL-7025S empieza con "HL7011". Ese número no existe en el catálogo de Elgin, cuya numeración salta de HL-7005 a HL-7012: es un error de captura del ERP (Hallazgo 15b). Por eso la descripción del ERP solo se usa para buscar y validar, nunca como dato final.
+    - **FS-001225:** el intercambio de FSX-5840301 se confirmó en la investigación (`DECISIONS.md`, Hallazgo Tarea 15b) en la búsqueda pública de DC Gaskets: Nissan KA24E 2.4L, 1989–2004. JC-20 (TF Victor/Dacomsa) no se confirmó, porque cubre hasta 1998 y la pieza llega a 1999. El adaptador DC/Dacomsa es lo primero que se recortó y queda como trabajo pendiente. Si entra antes de la entrega, se quita este punto.
   - Commit.
 - [ ] **Step 4: Sesión de verificación** (dedicada, antes del lunes 9 en la mañana):
   1. Clonar limpio en un directorio temporal, seguir el README al pie de la letra y anotar cualquier paso faltante.
@@ -1086,3 +1142,9 @@ end
   4. Comparar estructura contra `ejemplo_prueba_tecnica.xlsx`: hojas, encabezados y tipos.
   5. Doble corrida: comparar el contenido de los dos libros con `test/support/workbook_reader.rb` desde `bin/rails runner`. Además, comparar contra `docs/output/catalogo_bonaparte.xlsx`. Todo debe ser idéntico.
   6. Registrar el resultado y las horas en `docs/DECISIONS.md` y hacer commit.
+- [ ] **Step 5: CI de GitHub Actions en verde** (`.github/workflows/ci.yml`):
+  - Agregar `poppler-utils` al `apt-get install` del job `test`. Los tests de Fraco llaman a `pdftotext`.
+  - Causa de `test` y `system-test` en master: `db/schema.rb doesn't exist yet`. En master no hay migraciones (solo el esqueleto). En la rama `schema.rb` ya existe, así que esa causa desaparece al integrar. Verificarlo en el PR, no suponerlo.
+  - Quitar el job `system-test` (D17). La rama no tiene `test/system/`. La actualización en vivo se verifica a mano en el Step 4, con captura o GIF en el README.
+  - Desactivar dependabot: borrar `.github/dependabot.yml` (D17).
+  - Comprobarlo abriendo un pull request de `feature/catalog-pipeline` hacia `master` y esperar todos los jobs en verde.

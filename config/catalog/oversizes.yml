@@ -1,0 +1,7 @@
+# Oversize designations (D13). A standard designation, not a unit conversion:
+# D7's inch → mm rule does not apply here.
+STD: STD
+"+10": 0.25 mm (+0.010")
+"+20": 0.50 mm (+0.020")
+"+30": 0.75 mm (+0.030")
+"+40": 1.00 mm (+0.040")

@@ -1,0 +1,16 @@
+<%# The whole live block: replaced on catch-up and by the final broadcast. %>
+<div id="progress" data-status="<%= run.status %>">
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Referencia</th><th>Fabricante</th><th>Estado</th>
+        <th>Aplicaciones</th><th>Intercambios</th><th>Atributos</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render partial: "runs/item", collection: run.source_items, as: :item %>
+    </tbody>
+  </table>
+
+  <%= render "runs/download", run: run %>
+</div>

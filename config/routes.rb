@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  root "runs#new"
+  resources :runs, only: %i[new create show] do
+    # Current progress as a turbo stream, for the page's catch-up on subscribe.
+    get :progress, on: :member
+  end
 end

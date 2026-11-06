@@ -1,0 +1,7 @@
+{
+  "url": "https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/Buick/modelyear/2012?format=json",
+  "content_type": "application/json",
+  "sha256": "a8164c6b322f5769e7b877b563458ee4dc238e5f7adbadc3aac98c924141e0a2",
+  "fetched_at": "2026-11-05T23:51:44.318416Z",
+  "body_base64": "eyJDb3VudCI6NCwiTWVzc2FnZSI6IlJlc3VsdHMgcmV0dXJuZWQgc3VjY2Vzc2Z1bGx5IiwiU2VhcmNoQ3JpdGVyaWEiOiJNYWtlOkJ1aWNrIHwgTW9kZWxZZWFyOjIwMTIiLCJSZXN1bHRzIjpbeyJNYWtlX0lEIjo0NjgsIk1ha2VfTmFtZSI6IkJVSUNLIiwiTW9kZWxfSUQiOjE4MjEsIk1vZGVsX05hbWUiOiJMYUNyb3NzZSJ9LHsiTWFrZV9JRCI6NDY4LCJNYWtlX05hbWUiOiJCVUlDSyIsIk1vZGVsX0lEIjoxODIyLCJNb2RlbF9OYW1lIjoiUmVnYWwifSx7Ik1ha2VfSUQiOjQ2OCwiTWFrZV9OYW1lIjoiQlVJQ0siLCJNb2RlbF9JRCI6MTgyMywiTW9kZWxfTmFtZSI6IlZlcmFubyJ9LHsiTWFrZV9JRCI6NDY4LCJNYWtlX05hbWUiOiJCVUlDSyIsIk1vZGVsX0lEIjoxODQxLCJNb2RlbF9OYW1lIjoiRW5jbGF2ZSJ9XX0="
+}

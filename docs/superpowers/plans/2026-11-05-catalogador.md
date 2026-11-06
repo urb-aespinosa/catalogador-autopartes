@@ -1107,3 +1107,8 @@ end
   4. Comparar estructura contra `ejemplo_prueba_tecnica.xlsx`: hojas, encabezados y tipos.
   5. Doble corrida: comparar el contenido de los dos libros con `test/support/workbook_reader.rb` desde `bin/rails runner`. Además, comparar contra `docs/output/catalogo_bonaparte.xlsx`. Todo debe ser idéntico.
   6. Registrar el resultado y las horas en `docs/DECISIONS.md` y hacer commit.
+- [ ] **Step 5: CI de GitHub Actions en verde** (`.github/workflows/ci.yml`):
+  - Agregar `poppler-utils` al `apt-get install` del job `test`. Los tests de Fraco llaman a `pdftotext`.
+  - Causa de `test` y `system-test` en master: `db/schema.rb doesn't exist yet`. En master no hay migraciones (solo el esqueleto). En la rama `schema.rb` ya existe, así que esa causa desaparece al integrar. Verificarlo en el PR, no suponerlo.
+  - `system-test`: la rama no tiene `test/system/`, y `bin/rails test:system` falla con `LoadError ... test/system`. Opciones: quitar el job (no hay pruebas de sistema; la UI se prueba con tests de integración) o agregar una prueba de sistema mínima. Decidir y registrar en `docs/DECISIONS.md`.
+  - Comprobarlo abriendo un pull request de `feature/catalog-pipeline` hacia `master` y esperar todos los jobs en verde.

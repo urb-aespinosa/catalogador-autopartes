@@ -674,3 +674,13 @@ Pero dos tipos de casos borraban filas correctas:
 - **Validación:**
   - "Combustible · difiere": 8. El catálogo USA y EPA dan combustibles distintos; se conserva el del catálogo.
   - "Traducción · sin traducción": 43 de EPA ("Regular (Hybrid)" 41, "Premium (Hybrid)" 2).
+
+## 2026-11-06 15:43 — Tarea 16: corrida de entrega, snapshots y CI en verde
+
+- **Corrida real:** `docs/output/catalogo_bonaparte.xlsx`, desde la caché. Había 404 snapshots antes y 404 después, así que no hubo ninguna solicitud de red.
+  - Aplicaciones 1,449 (977 USA, 472 MEX), Intercambios 0, Atributos 10, Fuentes 2,853, Validación 517.
+  - Contenido idéntico al de `tmp/run6.xlsx` en las 8 hojas.
+- **Snapshots:** `bin/rails catalog:snapshots:dump` exportó los 404 a `db/snapshots/` (7.7 MB), versionados junto con el Excel.
+- **README:** completo, revisado por el desarrollador. Incluye el principio "toda la información es comprobable", Validación como diagnóstico de los datos de origen, la visión para producción (VCdb, ACES/PIES, adaptadores por proveedor) y la sección "Proceso", con el uso de IA.
+- **Intercambios vacía:** ningún número del ERP tiene confirmación oficial dentro de las fuentes que consulta la app. FS-001225 se confirmó en la investigación, pero el adaptador DC/Dacomsa se recortó (D19, prioridad 3) y queda pendiente.
+- **CI (D17):** `poppler-utils` en el job `test` y en el `Dockerfile`; se quitaron el job `system-test` y `.github/dependabot.yml`. PR #5 (`feature/catalog-pipeline` → `master`): `lint`, `scan_js`, `scan_ruby` y `test` en verde. La causa `db/schema.rb doesn't exist yet` desapareció, como se esperaba.

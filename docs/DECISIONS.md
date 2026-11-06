@@ -371,3 +371,23 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 **Por qué un Estado y no un texto en Valor fuente:** Estado ya es la columna por la que se filtra Validación. Con un valor propio, un filtro muestra todo lo que faltó por adaptador, sin mezclar un motivo con un valor de la fuente.
 
 **README (Tarea 16):** fabricantes soportados; qué sale para una marca sin adaptador (lo mínimo en Catálogo y en Validación); pasos para agregar un adaptador nuevo.
+
+## 2026-11-06 09:55 — Hallazgo (Tarea 15b): intercambios del ERP en catálogos oficiales
+
+**Cómo se buscó:** todas las solicitudes llevan el User-Agent del proyecto, con máximo una por segundo por sitio y sin credenciales. Una primera ronda usó un User-Agent de navegador; el desarrollador la detuvo, y todas las consultas se repitieron con el del proyecto. Los resultados de abajo son de esa segunda ronda. **Regla:** si un sitio bloquea o no responde con nuestro User-Agent, no se esquiva; se registra aquí y el intercambio queda en Validación.
+
+**Regla aprobada para "confirmado por aplicación" (precisa D16):** se confirma solo si el rango de años del otro catálogo **contiene todos** los años de nuestra pieza, y además coinciden motor, litros y cilindros. Si el otro rango es más corto, no se confirma.
+
+**Resultados (pieza FSX-5840301, Fraco: Nissan 2.4L, 2389 cc, 4 cil., 12V, 1989–1999)**
+
+| Número | Fuente oficial | Resultado |
+|---|---|---|
+| FS-001225 (DC Gaskets) | búsqueda pública `www.dcp.com.mx/CatalogoElectronico?operacion=BuscaRapida&term=FS-001225` | Nissan 4L 2.4L (2389cc) SOHC 12V, KA24E/KA24S, 1989/2004. **Confirmado.** |
+| JC-20 (TF Victor) | ficha de Dacomsa, dueña de TF Victor: `dacomsa.com/dacomsastorefront/dacomsa/es/Todas-las-lineas/TF-VICTOR/Juego-completo-para-motor/p/JC-20`. Es la URL principal; la de `/p/JC-20` redirige (301) a esta. | Nissan L4 2.4L (2389cc) SOHC 12V KA24E (1989-98). Además, DC lista JC-20 como equivalente de FS-001225. |
+| QJC20G (Quebec) | DC: sin resultados; Dacomsa: 404 | No encontrado → Validación. |
+| 83-301 (Moresa) | DC: sin resultados que coincidan; Dacomsa: 404 | No encontrado → Validación. |
+| HL7011 (Elgin) | `catalog.elginind.com/part-autocomplete/` | **No existe:** la numeración salta de HL-7005 a HL-7012. Es un **error de captura del ERP**. Ejemplo para la sección del README sobre calidad de los datos de origen. |
+
+**Sitios que no respondieron a nuestro User-Agent:** `www.moresa.com.mx` y `www.tfvictor.com.mx`, sin respuesta (código 000). `catalogo.dcp.com.mx` responde, pero el catálogo pide login; no se usa.
+
+**Pendiente (después de la adenda de mercado):** con la regla de arriba, JC-20 cubre 1989–1998 y nuestra pieza llega a 1999, así que JC-20 **no se confirma**: queda en Validación con su URL. FS-001225 (1989–2004) sí se confirma. El adaptador DC/Dacomsa, con snapshots y tests, queda para después de la adenda.

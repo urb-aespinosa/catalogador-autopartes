@@ -50,10 +50,13 @@ module Catalog
       configs = @epa&.configurations(make: app.manufacturer, model: app.model, year: app.year)
       matches = configs && engine_matches(app, configs)
       if matches&.empty?
-        record_engine_mismatch(app, configs)
-        return refuted(app, sales) if refutes?(app)
+        if refutes?(app)
+          record_engine_mismatch(app, configs, app.market == "USA" ? "eliminada" : "se conserva solo MEX")
+          return refuted(app, sales)
+        end
 
-        matches = configs = nil # D22 confirm_only: the mismatch neither confirms nor removes
+        record_engine_mismatch(app, configs, kept_outcome(app))
+        matches = configs = nil # D22: the mismatch neither confirms nor removes
       end
 
       rows = []
@@ -85,12 +88,17 @@ module Catalog
       app.with(market: "USA", vpic_unknown: nil, evidence_urls: app.evidence_urls.to_a + [ [ EPA_ORIGIN, url ] ])
     end
 
-    def record_engine_mismatch(app, configs)
+    def kept_outcome(app)
+      @epa.confirm_only?(make: app.manufacturer, model: app.model) ? "se conserva (confirm_only)" : "se conserva (excepción revisada)"
+    end
+
+    # The outcome tells an auditor what happened to the row (D22).
+    def record_engine_mismatch(app, configs, outcome)
       epa_engines = configs.map { "#{_1.displ}L #{_1.cylinders} cil" }.uniq.join(", ")
       url = @epa.evidence_url(make: app.manufacturer, year: app.year, configurations: configs)
       @engine_validations << Records::Validation.new(
         field: "Motor", erp_value: nil, url: app.url, status: "difiere",
-        source_value: "#{app.manufacturer} #{app.model} #{app.year} #{app.liters}L #{app.cylinders} cil · EPA: #{epa_engines} · #{url}"
+        source_value: "#{app.manufacturer} #{app.model} #{app.year} #{app.liters}L #{app.cylinders} cil · EPA: #{epa_engines} · #{url} · #{outcome}"
       )
     end
 

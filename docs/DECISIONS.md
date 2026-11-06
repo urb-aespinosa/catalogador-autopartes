@@ -550,6 +550,30 @@ Pero dos tipos de casos borraban filas correctas:
 - **Primera versión de las excepciones,** que era solo por modelo y año: también protegía el CTS 6.0L 2009, un motor que no existió ese año. Con la excepción por motor queda refutado.
 - **Lo que se pierde:** algunas refutaciones válidas, como la Express 3500 5.3L, quedan como `difiere` en lugar de borrarse. Es el error que no hace daño.
 
+**Ajuste 2026-11-06 13:32, tras la revisión independiente de la Tarea 5** (veredicto "listo con correcciones", sin hallazgos críticos):
+- **`confirm_only` (b) ahora incluye Yukon XL (GMC) y Avalanche (Chevrolet).** Las dos son líneas con versiones 2500 fuera de la cobertura de EPA:
+  - la Yukon XL 2500 solo aparece en EPA de 2011 a 2013;
+  - la Avalanche 2500 (8.1L, 2002–2006) no aparece.
+  - Hoy no cambia ninguna fila de `run4`, pero sin este ajuste la regla quedaba inconsistente para otro dataset.
+  - Un test fija la lista de genéricos del grupo (b).
+- **Validación dice qué pasó con la fila:** el texto de "Motor · difiere" termina con el resultado.
+  - `eliminada`: catálogo USA, la aplicación sale de todos los mercados.
+  - `se conserva solo MEX`: catálogo MEX, se niega solo la fila USA. Este cuarto texto no estaba en la propuesta aprobada; se agregó porque "eliminada" sería falso en ese caso.
+  - `se conserva (confirm_only)`.
+  - `se conserva (excepción revisada)`.
+- **Tests nuevos** de casos que ya funcionaban pero nada protegía:
+  - un motor conocido a medias (litros sin cilindros, o al revés) no se refuta;
+  - un nombre de D20 con modelo mapeado en EPA no recibe fila USA;
+  - un catálogo MEX con motor confirmado por EPA da fila MEX y fila USA;
+  - un modelo que vPIC conoce no se rescata con ventas INEGI en un año sin confirmar.
+- **Hallazgos menores,** registrados y no corregidos; también están en las limitaciones del README:
+  1. Un error dentro de `MarketResolver` (extracto o YAML corruptos) no se convierte en "error de fuente": detiene la pieza. Los archivos están versionados y tienen test.
+  2. Si falla la consulta de la lista de modelos de vPIC (`GetModelsForMake`), la pieza completa queda como "error de fuente". Hoy las respuestas están en caché y en fixtures.
+  3. Las aplicaciones sin año pasan con el mercado de su catálogo, pero sin evidencia de mercado en Fuentes ni fila de Mercado en Validación.
+  4. La Validación de Mercado muestra una sola URL por grupo (la menor). Fuentes conserva todas.
+  5. `Epa.config` lee el YAML tres veces en la primera carga. Es un costo menor de arranque.
+  6. Ningún test avisa si una excepción de `confirm_only_years` queda obsoleta después de actualizar el extracto de EPA. Al renovar el snapshot hay que repetir el reporte de refutaciones.
+
 ## 2026-11-06 13:09 — Hallazgo (adenda, Tarea 4): mercado MEX por ventas INEGI en la corrida real
 
 - **Corrida:** `tmp/run3.xlsx`, hecha desde la caché. Había 404 snapshots antes y 404 después, así que no hubo ninguna solicitud nueva.

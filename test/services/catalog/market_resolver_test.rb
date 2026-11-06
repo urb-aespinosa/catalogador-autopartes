@@ -82,6 +82,7 @@ class Catalog::MarketResolverTest < ActiveSupport::TestCase
     motor = validations.select { _1.field == "Motor" }
     assert_equal [ "difiere" ], motor.map(&:status)
     assert_match "Buick Allure 2005 5.3L 8 cil · EPA: 3.6L 6 cil, 3.8L 6 cil · https://www.fueleconomy.gov/", motor.first.source_value
+    assert motor.first.source_value.end_with?(" · eliminada")
     assert_empty validations.select { _1.field == "Mercado" }
   end
 
@@ -89,7 +90,47 @@ class Catalog::MarketResolverTest < ActiveSupport::TestCase
     apps, validations = resolve_usa(application(manufacturer: "Nissan", model: "D21", year: 1993, liters: 2.4, cylinders: 4, market: "MEX"))
 
     assert_equal [ "MEX" ], apps.map(&:market)
-    assert_equal [ "difiere" ], validations.select { _1.field == "Motor" }.map(&:status)
+    motor = validations.select { _1.field == "Motor" }
+    assert_equal [ "difiere" ], motor.map(&:status)
+    assert motor.first.source_value.end_with?(" · se conserva solo MEX")
+  end
+
+  test "an engine only half known is not verified, never refuted (Review Focus 1)" do
+    liters_only, v1 = resolve_usa(application(manufacturer: "Chevrolet", model: "Silverado 1500", year: 2010, liters: 6.0, cylinders: nil, market: "USA"))
+    cylinders_only, v2 = resolve_usa(application(manufacturer: "Chevrolet", model: "Silverado 1500", year: 2010, liters: nil, cylinders: 10, market: "USA"))
+
+    assert epa_evidence?(liters_only.find { _1.market == "USA" })
+    assert epa_evidence?(cylinders_only.find { _1.market == "USA" })
+    assert_empty (v1 + v2).select { _1.field == "Motor" }
+  end
+
+  test "a name vPIC never lists gets no USA row even when EPA maps it (D20)" do
+    apps, = resolve_usa(application(manufacturer: "Chevrolet", model: "Silverado 1500", year: 2015, liters: 4.3, cylinders: 6, market: "USA", vpic_unknown: true))
+
+    assert_equal [ "MEX" ], apps.map(&:market)
+  end
+
+  test "MEX catalog with an EPA engine match also gets a USA row at level a" do
+    apps, validations = resolve_usa(application(manufacturer: "Nissan", model: "D21", year: 1993, liters: 3.0, cylinders: 6, market: "MEX"))
+
+    assert_equal [ "MEX", "USA" ], apps.map(&:market)
+    assert epa_evidence?(apps.last)
+    assert_includes validations.map { [ _1.source_value, _1.status ] }, [ "USA · Nissan D21 1993", "confirmado por EPA" ]
+  end
+
+  test "a model vPIC knows is not rescued by INEGI sales in an unconfirmed year (D20)" do
+    stub_source("https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/Chevrolet/modelyear/2020?format=json",
+                "vpic/models_chevrolet_2020.json", content_type: "application/json")
+    stub_source("https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/Chevrolet?format=json",
+                "vpic/models_chevrolet.json", content_type: "application/json")
+    rows, vpic_validations = Catalog::Vpic.expand([ application(manufacturer: "CHEVROLET", model: "Avalanche", years: 2020..2020, market: "USA") ])
+    sold = Catalog::InegiSales.new(models: { "CHEVROLET" => { "Avalanche" => [ { "marca" => GM, "modelo" => "Avalanche UUV" } ] } },
+                                   rows: [ sale(2020, GM, "Avalanche UUV", 3) ])
+
+    apps, = Catalog::MarketResolver.call(rows, inegi: sold, epa: nil)
+
+    assert_empty apps
+    assert_equal [ "Chevrolet Avalanche 2020" ], vpic_validations.map(&:source_value)
   end
 
   test "without engine data EPA presence is enough for USA level a" do
@@ -124,16 +165,20 @@ class Catalog::MarketResolverTest < ActiveSupport::TestCase
 
     assert_equal [ "USA" ], apps.map(&:market)
     assert_not epa_evidence?(apps.first)
-    assert_equal [ "difiere" ], validations.select { _1.field == "Motor" }.map(&:status)
+    motor = validations.select { _1.field == "Motor" }
+    assert_equal [ "difiere" ], motor.map(&:status)
+    assert motor.first.source_value.end_with?(" · se conserva (confirm_only)")
     assert_includes validations.map { [ _1.source_value, _1.status ] }, [ "USA · Chevrolet Express 2500 2007", "según catálogo" ]
   end
 
   test "a reviewed exception keeps only its engine (D22)" do
-    kept, = resolve_usa(application(manufacturer: "Cadillac", model: "CTS", year: 2009, liters: 6.2, cylinders: 8, market: "USA"))
-    removed, = resolve_usa(application(manufacturer: "Cadillac", model: "CTS", year: 2009, liters: 6.0, cylinders: 8, market: "USA"))
+    kept, kept_validations = resolve_usa(application(manufacturer: "Cadillac", model: "CTS", year: 2009, liters: 6.2, cylinders: 8, market: "USA"))
+    removed, removed_validations = resolve_usa(application(manufacturer: "Cadillac", model: "CTS", year: 2009, liters: 6.0, cylinders: 8, market: "USA"))
 
     assert_equal [ "USA" ], kept.map(&:market)
+    assert kept_validations.find { _1.field == "Motor" }.source_value.end_with?(" · se conserva (excepción revisada)")
     assert_empty removed
+    assert removed_validations.find { _1.field == "Motor" }.source_value.end_with?(" · eliminada")
   end
 
   test "MEX catalog with INEGI sales gives one MEX row at level a" do

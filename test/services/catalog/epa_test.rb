@@ -71,6 +71,19 @@ class Catalog::EpaTest < ActiveSupport::TestCase
     assert epa.refutes?(make: "Buick", model: "Allure", year: 2007, liters: 5.3, cylinders: 8)
   end
 
+  test "generic names of lines with HD versions EPA does not rate are confirm_only (D22 b)" do
+    confirm_only = Catalog::Epa.default_confirm_only
+
+    { "Chevrolet" => [ "Avalanche", "Express", "Silverado", "Suburban" ], "GMC" => [ "Savana", "Sierra", "Yukon XL" ] }.each do |make, models|
+      models.each { assert_includes confirm_only.fetch(make), _1, "#{make} #{_1}" }
+    end
+  end
+
+  test "confirm_only? tells a confirm_only model from the rest" do
+    assert epa.confirm_only?(make: "Chevrolet", model: "Silverado 2500 HD")
+    assert_not epa.confirm_only?(make: "Buick", model: "Allure")
+  end
+
   test "every confirm_only entry is a mapped model" do
     models = Catalog::Epa.default_models
     names = Catalog::Epa.default_confirm_only.flat_map { |make, list| list.map { [ make, _1 ] } } +

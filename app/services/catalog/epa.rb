@@ -40,9 +40,11 @@ module Catalog
     # "difiere".
     def refutes?(make:, model:, year:, liters:, cylinders:)
       @models.dig(make, model).present? &&
-        !@confirm_only.include?([ make, model ]) &&
+        !confirm_only?(make: make, model: model) &&
         !@confirm_only_years.include?(exception_key(make, model, year, liters, cylinders))
     end
+
+    def confirm_only?(make:, model:) = @confirm_only.include?([ make, model ])
 
     # nil = no evidence either way: the model is not mapped, or EPA lists none
     # of its equivalent models that year (e.g. heavy-duty pickups).

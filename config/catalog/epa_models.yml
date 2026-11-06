@@ -426,6 +426,7 @@ models:
 # D22 (b): generic names of lines with HD versions EPA does not rate.
 confirm_only:
   Chevrolet:
+    - Avalanche        # (b) the Avalanche 2500 (8.1L, 2002-2006) is outside EPA's coverage
     - Express          # (b)
     - Express 2500     # (a)
     - Express 3500     # (a)
@@ -441,6 +442,7 @@ confirm_only:
     - Sierra           # (b)
     - Sierra 2500      # (a)
     - Sierra 2500 HD   # (a)
+    - Yukon XL         # (b) the Yukon XL 2500 is in EPA only for 2011-2013
     - Yukon XL 2500    # (a)
 
 # D22: reviewed gaps in EPA's data (the engine existed but EPA does not list

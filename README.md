@@ -18,3 +18,13 @@
   Esos modelos confirman el motor y aportan combustible y evidencia. Si el motor no coincide, la fila se conserva y Validación registra `difiere`.
 - **Huecos en los datos de EPA:** los casos donde el vehículo existió pero EPA no lo lista se registran como excepciones revisadas por modelo · año · motor, con su motivo. Por ejemplo, el Cadillac CTS-V 2009 con 6.2L: EPA lista el CTS-V solo desde 2010. Esos casos se conservan como `difiere`, nunca como confirmados.
 - **Límite:** un hueco de EPA que nadie ha revisado todavía puede refutar un motor real. Por eso el reporte de refutaciones se revisa contra la historia de cada motor antes de aceptar cambios en las equivalencias.
+- **Auditoría:** cada "Motor · difiere" en Validación termina con lo que pasó con la fila: `eliminada`, `se conserva solo MEX`, `se conserva (confirm_only)` o `se conserva (excepción revisada)`.
+
+### Otras limitaciones conocidas del mercado (revisión independiente, D22)
+
+- **Errores de datos de referencia.** Si el extracto de INEGI o de EPA, o sus YAML, están dañados, el error detiene la pieza en lugar de registrarse como "error de fuente". Los archivos están versionados y tienen tests que los regeneran.
+- **Lista de modelos de vPIC.** Si falla la consulta `GetModelsForMake` (D20), la pieza completa queda como "error de fuente". Las respuestas usadas están en caché y en los fixtures.
+- **Aplicaciones sin año.** Conservan el mercado de su catálogo, pero sin evidencia de mercado en Fuentes ni fila de Mercado en Validación.
+- **Una URL por grupo en Validación de Mercado.** Cada grupo muestra una sola URL; la hoja Fuentes conserva todas.
+- **Arranque.** `Epa.config` lee su YAML tres veces en la primera carga.
+- **Excepciones revisadas.** Ningún test detecta si una excepción de `confirm_only_years` queda obsoleta después de actualizar el extracto de EPA. Al renovar el snapshot hay que repetir el reporte de refutaciones.

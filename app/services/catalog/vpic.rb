@@ -23,6 +23,10 @@ module Catalog
         next rows << app unless app.years && app.market == "USA"
 
         confirmed, missing = app.years.partition { |year| confirmed?(app, year) }
+        # D20: a name vPIC lists in no year is left to MarketResolver (INEGI).
+        # One confirmed year already proves vPIC knows the name.
+        next rows.concat(app.years.map { app.with(year: _1, years: nil, vpic_unknown: true) }) if confirmed.empty? && unknown_name?(app)
+
         rows.concat(confirmed.map { |year| confirmed_row(app, year) })
         validations << missing_validation(app, missing) if missing.any?
       end
@@ -55,9 +59,16 @@ module Catalog
 
     # The capacity alias (D14) only changes the name sent to vPIC.
     def confirmed?(app, year)
-      name = ALIASES.dig(display_make(app.manufacturer), app.model) || app.model
-      model_names(year_url(app.manufacturer, year)).any? { same_model?(name, _1) }
+      model_names(year_url(app.manufacturer, year)).any? { same_model?(vpic_name(app), _1) }
     end
+
+    # D20: not in the make's model list for any year.
+    def unknown_name?(app)
+      url = "#{BASE}/GetModelsForMake/#{Fetcher.encode_path(display_make(app.manufacturer))}?format=json"
+      model_names(url).none? { same_model?(vpic_name(app), _1) }
+    end
+
+    def vpic_name(app) = ALIASES.dig(display_make(app.manufacturer), app.model) || app.model
 
     def confirmed_row(app, year)
       app.with(year: year, years: nil, evidence_urls: app.evidence_urls.to_a + [ [ EVIDENCE, year_url(app.manufacturer, year) ] ])

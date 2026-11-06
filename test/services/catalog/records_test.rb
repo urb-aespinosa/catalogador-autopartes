@@ -6,7 +6,7 @@ class Catalog::RecordsTest < ActiveSupport::TestCase
       manufacturer: "Nissan", model: "280ZX", submodel: nil, year: 1981, years: nil,
       liters: 2.8, cc: nil, cid: nil, cylinders: 6, block: "L", fuel: nil, market: "MEX",
       url: "https://rexite.net/x", origin: "oficial", original: "Nissan 280Zx 1981",
-      evidence_urls: [ [ "verificación NHTSA vPIC", "https://vpic/x" ] ]
+      evidence_urls: [ [ "verificación NHTSA vPIC", "https://vpic/x" ] ], vpic_unknown: nil
     )
     result = Catalog::Records::ItemResult.new(
       product: "BOMBA DE ACEITE DEL MOTOR",

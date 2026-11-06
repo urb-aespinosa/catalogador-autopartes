@@ -121,6 +121,23 @@ class Catalog::WorkbookExporterTest < ActiveSupport::TestCase
     assert_equal fuentes.uniq, fuentes
   end
 
+  test "Fuentes uses the third element of an evidence as its original value" do
+    app = Catalog::Records::Application.new(
+      **Catalog::Records::Application.members.index_with(nil), manufacturer: "Nissan", model: "Pickup", year: 2010,
+      market: "MEX", url: "https://fraco/x", origin: "oficial", original: "PICK UP 10/10",
+      evidence_urls: [ [ "mercado MEX: ventas INEGI RAIAVL", "https://inegi", "Pickup Largo · 2010 · 120 unidades" ],
+                       [ "mercado según catálogo", "https://fraco/x" ] ]
+    )
+    run = Run.create!
+    run.source_items.create!(position: 0, part_number: "FSX-1", manufacturer: "FRACO", item_group: "JUEGO DE EMPAQUES", status: "done", product: "P",
+                             result: Catalog::Records::ItemResult.new(product: "P", applications: [ app ], interchanges: [], attributes: [], validations: []).to_h)
+    Catalog::WorkbookExporter.call(run, @path)
+
+    fuentes = workbook_rows(@path)["Fuentes"].drop(1).map { _1.values_at(2, 3, 4) }
+    assert_includes fuentes, [ "mercado MEX: ventas INEGI RAIAVL", "https://inegi", "Pickup Largo · 2010 · 120 unidades" ]
+    assert_includes fuentes, [ "mercado según catálogo", "https://fraco/x", "PICK UP 10/10" ]
+  end
+
   test "Validación reports source status per part" do
     validacion = rows("Validación")
 

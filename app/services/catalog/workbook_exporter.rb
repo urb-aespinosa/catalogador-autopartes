@@ -147,7 +147,9 @@ module Catalog
     def source_rows
       each_item do |item, result|
         rows = result.applications.flat_map do |app|
-          [ [ "aplicación", app.origin, app.url, app.original ], *app.evidence_urls.to_a.map { |origin, url| [ "aplicación", origin, url, app.original ] } ]
+          # An evidence is [origin, url] or [origin, url, original value] (D19).
+          [ [ "aplicación", app.origin, app.url, app.original ],
+            *app.evidence_urls.to_a.map { |origin, url, original| [ "aplicación", origin, url, original || app.original ] } ]
         end
         rows += result.interchanges.map { [ "intercambio", _1.origin, _1.url, _1.number ] }
         rows += result.attributes.map { [ "atributo", _1.origin, _1.url, _1.original ] }

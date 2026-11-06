@@ -3,6 +3,7 @@ module Catalog
   #
   #   parse hints → official adapter → vPIC expansion (per-engine years only)
   #   → complements from officially confirmed interchanges → normalize
+  #   → markets by evidence (INEGI, catalog; D19/D20)
   #   → reconcile hints vs. source (Validación)
   #
   # It never raises for source problems: a failed request or an unreadable
@@ -11,11 +12,12 @@ module Catalog
     INTERCHANGES = YAML.load_file(Rails.root.join("config/catalog/interchanges.yml")).freeze
     def self.call(item) = new(item).call
 
-    def initialize(item, interchanges: INTERCHANGES, adapters: {}, registry: Sources::Registry)
+    def initialize(item, interchanges: INTERCHANGES, adapters: {}, registry: Sources::Registry, market_resolver: MarketResolver)
       @item = item
       @interchanges = interchanges.select { _1["part"] == item.part_number }
       @adapters = adapters
       @registry = registry
+      @market_resolver = market_resolver
       @validations = []
       @status = "done"
     end
@@ -26,7 +28,7 @@ module Catalog
       result = official_result(hints)
       result = add_complements(result, hints) if result
 
-      normalized = Normalizer.call(item: @item, result: result)
+      normalized = with_markets(Normalizer.call(item: @item, result: result))
       reconciled = Reconciler.call(item: @item, hints: hints, result: normalized, product_kind: result&.product_kind)
       # D18: with no source configured nothing was searched, so no hint is "no encontrado".
       reconciled = reconciled.map { _1.with(status: "sin fuente configurada") } if @status == "no_source"
@@ -36,6 +38,13 @@ module Catalog
     end
 
     private
+
+    # D19/D20: markets are decided on normalized names (makes, models), so the
+    # resolver runs after the Normalizer and before reconciling hints.
+    def with_markets(normalized)
+      applications, validations = @market_resolver.call(normalized.applications)
+      normalized.with(applications: applications, validations: normalized.validations + validations)
+    end
 
     # Any failure inside an adapter (network, changed page, or an unexpected
     # Ruby error on content we did not foresee) becomes "error de fuente" for

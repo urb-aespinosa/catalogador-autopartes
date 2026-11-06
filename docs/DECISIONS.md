@@ -549,3 +549,35 @@ Pero dos tipos de casos borraban filas correctas:
 
 - **Primera versión de las excepciones,** que era solo por modelo y año: también protegía el CTS 6.0L 2009, un motor que no existió ese año. Con la excepción por motor queda refutado.
 - **Lo que se pierde:** algunas refutaciones válidas, como la Express 3500 5.3L, quedan como `difiere` en lugar de borrarse. Es el error que no hace daño.
+
+## 2026-11-06 13:09 — Hallazgo (adenda, Tarea 4): mercado MEX por ventas INEGI en la corrida real
+
+- **Corrida:** `tmp/run3.xlsx`, hecha desde la caché. Había 404 snapshots antes y 404 después, así que no hubo ninguna solicitud nueva.
+  - Para D20, antes se descargaron las listas de modelos de vPIC (`GetModelsForMake`) de Buick, Cadillac, Pontiac, Saab, Isuzu y Hummer: seis solicitudes con el User-Agent del proyecto, aprobadas por el desarrollador.
+  - La lista de la armadora solo se consulta cuando vPIC no confirmó ningún año de la aplicación.
+- **Aplicaciones:** 1,733 en `run3` contra 1,187 en `run2`.
+  - Las filas USA no cambian: 1,154 (HL-7025S 1,130, SP26-329R/L+20 24). EPA todavía no interviene; entra en la Tarea 5.
+  - Las filas MEX pasan de 33 a 579.
+
+  | Pieza | MEX | USA |
+  |---|---|---|
+  | FSX-5840301 (Fraco, catálogo MEX) | 31 | — |
+  | HL-7025S (Elgin, catálogo USA) | 526 | 1,130 |
+  | RM-152 (Rexite, catálogo MEX) | 2 | — |
+  | SP26-329R/L+20 (Safety, catálogo USA) | 20 | 24 |
+- **Validación de Mercado** (filas agrupadas por pieza, armadora, modelo, mercado y nivel):
+  - MEX "confirmado por ventas": 28.
+  - MEX "según catálogo": 8. Son Fraco y Rexite, con aplicaciones de antes de 2005, el año en que empieza INEGI.
+  - USA "según catálogo": 54.
+- **D20, nombres que vPIC no conoce en ningún año:** entraron solo como MEX nivel a, en los años con ventas.
+  - Cheyenne 2019–2024 (6 filas).
+  - Sonora 2005–2007 (3).
+  - Express Pasajeros 2005–2020 (26).
+  - Express Cargo 2005–2025 (38).
+
+  Sus demás años siguen en Validación como "Modelo-año · no encontrado".
+- **Decisiones de implementación** (registro de la Tarea 4):
+  - La marca `vpic_unknown` viaja en la aplicación desde `Vpic.expand` hasta `MarketResolver`, que la quita.
+  - El resolvedor corre después del `Normalizer` y antes del `Reconciler`.
+  - Validación registra también el nivel b de USA, porque el spec dice que Validación registra el nivel usado.
+  - En esta tarea, el combustible de la fila MEX es el de la aplicación; la regla por mercado llega en la Tarea 6.

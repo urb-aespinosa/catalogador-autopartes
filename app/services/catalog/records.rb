@@ -13,9 +13,11 @@ module Catalog
       end
     end
 
+    # vpic_unknown (D20): set by Vpic.expand when vPIC lists the model name in
+    # no year at all; MarketResolver consumes it and clears it.
     Application = Data.define(
       :manufacturer, :model, :submodel, :year, :years, :liters, :cc, :cid, :cylinders,
-      :block, :fuel, :market, :url, :origin, :original, :evidence_urls
+      :block, :fuel, :market, :url, :origin, :original, :evidence_urls, :vpic_unknown
     ) do
       include Serializable
 

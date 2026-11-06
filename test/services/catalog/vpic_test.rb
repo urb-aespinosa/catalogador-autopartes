@@ -27,7 +27,7 @@ class Catalog::VpicTest < ActiveSupport::TestCase
     assert_empty validations
   end
 
-  test "a discontinued model-year goes to validation instead of a row" do
+  test "a model vPIC knows keeps its unconfirmed years as no encontrado (D20)" do
     rows, validations = Catalog::Vpic.expand([ application(model: "Avalanche", years: 2020..2020) ])
 
     assert_empty rows
@@ -41,14 +41,18 @@ class Catalog::VpicTest < ActiveSupport::TestCase
     assert_equal [ 2007 ], rows.map(&:year)
   end
 
-  test "trims and market names vPIC does not list go to validation (spec 5.7)" do
+  test "a name vPIC lists in no year is returned per year for the market resolver (D20)" do
+    stub_source("#{VPIC}/GetModelsForMakeYear/make/Chevrolet/modelyear/2008?format=json", "vpic/models_chevrolet_2020.json", content_type: "application/json")
     rows, validations = Catalog::Vpic.expand([
       application(model: "Silverado 1500 HD Classic", years: 2007..2007),
-      application(model: "Express Pasajeros", years: 2007..2007)
+      application(model: "Express Pasajeros", years: 2007..2008)
     ])
 
-    assert_empty rows
-    assert_equal [ "Chevrolet Silverado 1500 HD Classic 2007", "Chevrolet Express Pasajeros 2007" ], validations.map(&:source_value)
+    assert_equal [ [ "Silverado 1500 HD Classic", 2007 ], [ "Express Pasajeros", 2007 ], [ "Express Pasajeros", 2008 ] ],
+                 rows.map { [ _1.model, _1.year ] }
+    assert rows.all?(&:vpic_unknown)
+    assert rows.all? { _1.years.nil? && _1.evidence_urls.empty? }
+    assert_empty validations
   end
 
   test "unconfirmed years of one application are reported together as ranges" do
@@ -76,8 +80,9 @@ class Catalog::VpicTest < ActiveSupport::TestCase
       application(model: "Cheyenne", years: 2007..2007)
     ])
 
-    assert_empty rows
-    assert_equal 2, validations.size
+    assert_equal [ "Silverado 2500 HD Classic", "Cheyenne" ], rows.map(&:model)
+    assert rows.all?(&:vpic_unknown)
+    assert_empty validations
   end
 
   test "every alias only removes capacity suffixes" do

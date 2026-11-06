@@ -114,11 +114,24 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
 
     assert_equal "JUEGO DE PUNTERÍAS DE MOTOR", r.product
     assert r.applications.any?
-    assert r.applications.all? { _1.year.is_a?(Integer) && _1.years.nil? && _1.market == "USA" }
-    assert r.applications.all? { _1.evidence_urls.any? { |origin, _| origin == "verificación NHTSA vPIC" } }
+    assert r.applications.all? { _1.year.is_a?(Integer) && _1.years.nil? && _1.vpic_unknown.nil? }
+    # Every row is backed by vPIC (USA) or by INEGI sales (MEX, including D20 names).
+    assert r.applications.all? { |app| app.evidence_urls.any? { |origin, _| [ "verificación NHTSA vPIC", "mercado MEX: ventas INEGI RAIAVL" ].include?(origin) } }
     assert_includes r.validations.map { [ _1.field, _1.status ] }, [ "Unidad", "difiere" ]
     assert_includes r.validations.map(&:field), "Modelo-año"
     assert_equal "done", item.reload.status
+  end
+
+  test "applications come out split by market" do
+    item = source_item(manufacturer: "ELGIN", part_number: "HL-7025S", item_group: "PUNTERIAS", unit: "PZA", description: "HL7011 CHEVROLET 5.3")
+
+    r = process(item)
+
+    assert_equal [ "MEX", "USA" ], r.applications.map(&:market).uniq.sort
+    mex = r.applications.select { _1.market == "MEX" }
+    assert mex.all? { |app| app.evidence_urls.any? { |origin, _| origin == "mercado MEX: ventas INEGI RAIAVL" } }
+    assert_includes r.validations.map { [ _1.field, _1.status ] }, [ "Mercado", "confirmado por ventas" ]
+    assert_includes r.validations.map { [ _1.field, _1.status ] }, [ "Mercado", "según catálogo" ]
   end
 
   test "a confirmed interchange adds applications marked vía intercambio, never its attributes" do

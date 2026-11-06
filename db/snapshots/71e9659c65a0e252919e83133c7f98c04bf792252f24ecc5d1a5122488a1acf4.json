@@ -1,0 +1,7 @@
+{
+  "url": "https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/Hummer/modelyear/2008?format=json",
+  "content_type": "application/json",
+  "sha256": "b3d178f43c76f6e9af1266afbf655462baa77340f8ebd53c9ef6265d644915c6",
+  "fetched_at": "2026-11-05T23:53:11.179380Z",
+  "body_base64": "eyJDb3VudCI6MiwiTWVzc2FnZSI6IlJlc3VsdHMgcmV0dXJuZWQgc3VjY2Vzc2Z1bGx5IiwiU2VhcmNoQ3JpdGVyaWEiOiJNYWtlOkh1bW1lciB8IE1vZGVsWWVhcjoyMDA4IiwiUmVzdWx0cyI6W3siTWFrZV9JRCI6OTUxLCJNYWtlX05hbWUiOiJIVU1NRVIiLCJNb2RlbF9JRCI6NDU5OCwiTW9kZWxfTmFtZSI6IkgyIn0seyJNYWtlX0lEIjo5NTEsIk1ha2VfTmFtZSI6IkhVTU1FUiIsIk1vZGVsX0lEIjo0NTk5LCJNb2RlbF9OYW1lIjoiSDMifV19"
+}

@@ -1,0 +1,7 @@
+{
+  "url": "https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/Pontiac/modelyear/2015?format=json",
+  "content_type": "application/json",
+  "sha256": "ef3e0359c89b125720c33be15b1bfd2ad592c0a8c174a3403dc38443376c2209",
+  "fetched_at": "2026-11-05T23:53:33.379259Z",
+  "body_base64": "eyJDb3VudCI6MCwiTWVzc2FnZSI6IlJlc3VsdHMgcmV0dXJuZWQgc3VjY2Vzc2Z1bGx5IiwiU2VhcmNoQ3JpdGVyaWEiOiJNYWtlOlBvbnRpYWMgfCBNb2RlbFllYXI6MjAxNSIsIlJlc3VsdHMiOltdfQ=="
+}

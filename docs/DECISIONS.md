@@ -443,3 +443,16 @@ Todas las consultas automáticas usaron el User-Agent del proyecto y una solicit
 - **La entrega se mueve al sábado 2026-11-07:** calidad primero.
 
 **Limitaciones conocidas (README):** año de venta vs. año modelo; MEX sin verificación de motor; EPA no cubre HD ni modelos solo mexicanos; INEGI empieza en 2005; "General Motors" es un grupo.
+
+## 2026-11-06 12:01 — Hallazgo (adenda, Tarea 1): snapshot del archivo masivo de EPA
+
+- **Fuente:** `https://www.fueleconomy.gov/feg/epadata/vehicles.csv.zip`.
+  - Primero una solicitud HEAD y luego una GET, las dos con el User-Agent del proyecto (11:58–11:59). Respondió `200`, sin bloqueo.
+  - Pesa 2,228,192 bytes. `Last-Modified: 2026-11-04`.
+- **Contenido:** un solo `vehicles.csv` con 84 columnas y 50,647 configuraciones, de los años modelo 1984 a 2027.
+- **Extracto** `db/reference/epa/vehicles_scope.csv`: 12,635 filas y 8 columnas (`year, make, model, id, displ, cylinders, fuelType, atvType`).
+  - Por marca: Chevrolet 4,619 · GMC 2,916 · Nissan 1,754 · Pontiac 893 · Cadillac 836 · Buick 732 · Isuzu 434 · Saab 432 · Hummer 19.
+- **Cómo se reconstruye:** `bin/rails catalog:epa:filter`. Un test regenera el extracto desde el ZIP y compara el sha256, igual que con INEGI. La procedencia está en `db/reference/epa/vehicles.yml`.
+- **Columnas por nombre:** se eligen por su nombre, no por su posición, porque el orden de las 84 columnas de EPA no está garantizado. Si falta alguna, falla con `FormatError` y no escribe nada.
+- **Celdas vacías:** una celda vacía entre comillas (`""`) y una sin comillas se escriben igual, como vacío.
+- **Plan B no necesario:** con el archivo masivo no hace falta consultar la API de EPA modelo por modelo.

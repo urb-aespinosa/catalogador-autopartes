@@ -19,6 +19,14 @@ namespace :catalog do
     end
   end
 
+  namespace :epa do
+    desc "Rebuild the in-scope extract of EPA vehicles.csv from the versioned zip (D19)"
+    task filter: :environment do
+      rows = Catalog::EpaVehiclesFilter.call
+      puts "Extracto EPA: #{rows} filas → #{Catalog::EpaVehiclesFilter::OUTPUT.relative_path_from(Rails.root)}"
+    end
+  end
+
   namespace :snapshots do
     desc "Export cached source snapshots to versioned files (default: db/snapshots)"
     task :dump, [ :dir ] => :environment do |_, args|

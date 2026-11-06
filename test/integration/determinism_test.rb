@@ -18,5 +18,8 @@ class DeterminismTest < ActiveSupport::TestCase
 
     assert_equal first, second
     assert first["Aplicaciones"].size > 1
+    # The reader tells a real formula from the text "=B4-B5", so a run that
+    # stored formulas as text would not compare equal to one that did not.
+    assert_includes first["Métricas"].flatten, WorkbookReader::Formula.new("B4-B5")
   end
 end

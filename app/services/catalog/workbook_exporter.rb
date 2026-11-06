@@ -56,12 +56,11 @@ module Catalog
     end
 
     # Text stays text even when it looks numeric ("6536" codes are converted
-    # before); "=..." strings are formulas.
+    # before) or starts with "=": data from sources is never a formula.
     def cell_type(value)
       case value
       when Integer then :integer
       when Float then :float
-      when /\A=/ then nil
       else :string
       end
     end
@@ -73,9 +72,14 @@ module Catalog
         sheet.add_row [ "Referencias:", @items.size ], types: [ :string, :integer ]
         METRIC_BLOCKS.each do |name, row|
           sheet.add_row []
-          sheet.add_row [ name, tables.fetch(name).size ], types: [ :string, :integer ]
-          sheet.add_row [ "Origen", input_counts.fetch(name, 0) ], types: [ :string, :integer ]
-          sheet.add_row [ "Incrementos", "=B#{row}-B#{row + 1}" ], types: [ :string, nil ]
+          generated, origin = tables.fetch(name).size, input_counts.fetch(name, 0)
+          sheet.add_row [ name, generated ], types: [ :string, :integer ]
+          sheet.add_row [ "Origen", origin ], types: [ :string, :integer ]
+          # caxlsx escapes "=..." as text by default (formula injection guard);
+          # only this row, whose formula we write ourselves, opts out. The
+          # cached result is for readers that do not recalculate.
+          sheet.add_row [ "Incrementos", "=B#{row}-B#{row + 1}" ], types: [ :string, nil ],
+            escape_formulas: [ true, false ], formula_values: [ nil, generated - origin ]
         end
       end
     end

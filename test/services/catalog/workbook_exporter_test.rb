@@ -49,12 +49,30 @@ class Catalog::WorkbookExporterTest < ActiveSupport::TestCase
     assert_equal [ "Referencias:", 5 ], m[1].first(2)
     assert_equal [ "Aplicaciones", rows("Aplicaciones").size ], m[3].first(2)
     assert_equal [ "Origen", 0 ], m[4].first(2)
-    assert_equal [ "Incrementos", "=B4-B5" ], m[5].first(2)
+    assert_equal [ "Incrementos", formula("B4-B5") ], m[5].first(2)
     assert_equal [ "Intercambios", rows("Intercambios").size ], m[7].first(2)
-    assert_equal [ "Incrementos", "=B8-B9" ], m[9].first(2)
+    assert_equal [ "Incrementos", formula("B8-B9") ], m[9].first(2)
     assert_equal [ "Atributos", rows("Atributos").size ], m[11].first(2)
-    assert_equal [ "Incrementos", "=B12-B13" ], m[13].first(2)
+    assert_equal [ "Incrementos", formula("B12-B13") ], m[13].first(2)
   end
+
+  # Found in manual verification: caxlsx escaped "=B4-B5" and stored it as
+  # inline text, so Excel showed the text instead of the result.
+  test "Incrementos cells are stored as real formulas, not text" do
+    export
+    xml = Zip::File.open(@path.to_s) { |zip| zip.read("xl/worksheets/sheet2.xml") }
+
+    m = export["Métricas"]
+    { "B6" => 3, "B10" => 7, "B14" => 11 }.each do |ref, total_row|
+      cell = Nokogiri::XML(xml).remove_namespaces!.at_xpath("//c[@r='#{ref}']")
+      assert cell.at_xpath("f"), "#{ref} should have an <f> element: #{cell}"
+      assert_not_equal "inlineStr", cell["t"], ref
+      # Cached result, for readers that do not recalculate (Roo, previews).
+      assert_equal (m[total_row][1] - m[total_row + 1][1]).to_s, cell.at_xpath("v")&.text, ref
+    end
+  end
+
+  def formula(expression) = WorkbookReader::Formula.new(expression)
 
   test "numeric cells are numbers and text stays text" do
     row = rows("Aplicaciones").find { _1[0] == "FSX-5840301" }

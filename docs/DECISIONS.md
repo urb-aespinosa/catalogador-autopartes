@@ -344,3 +344,16 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 - **Push a GitHub después de cada tarea terminada.**
 
 **Por qué:** una prueba de navegador con jobs y Turbo Streams es frágil en CI y aporta poco frente a los tests de integración que ya existen.
+
+## 2026-11-06 09:21 — Hallazgo (verificación manual): Incrementos de Métricas salían como texto
+
+**Qué pasó:** en Métricas, las celdas B6, B10 y B14 mostraban el texto "=B4-B5" en lugar del resultado. En el XML estaban guardadas como `inlineStr`, no como fórmula. caxlsx 4.5 **escapa por defecto** los valores que empiezan con "=" (`escape_formulas`) y los guarda como texto.
+
+**Por qué el test no lo detectó:** el lector de los tests convertía una fórmula real en el texto "=B4-B5". Una fórmula y un texto con esa forma se leían igual, así que el test pasaba con el bug.
+
+**Corrección**
+- El escape **se mantiene en todo el libro**. Protege contra la *inyección de fórmulas*: un valor de una página web que empiece con "=" nunca se ejecuta en Excel. Ningún dato de una fuente se trata como fórmula.
+- Solo la celda de Incrementos lo desactiva (`escape_formulas: [true, false]`), porque esa fórmula la escribimos nosotros.
+- Se guarda también el **resultado calculado** (`formula_values`). Así Roo y los visores que no recalculan (como la vista previa de macOS) muestran el número.
+- El lector de los tests devuelve las fórmulas como `WorkbookReader::Formula`, nunca como texto. Así, el test de Métricas y el de doble corrida distinguen una fórmula de un texto.
+- Test nuevo: el XML de B6, B10 y B14 tiene un elemento `<f>`, no es `inlineStr` y su valor guardado es la resta correcta.

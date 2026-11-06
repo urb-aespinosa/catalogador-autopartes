@@ -704,3 +704,13 @@ Pero dos tipos de casos borraban filas correctas:
 **Se quedan como están** (app local de prueba, sin efecto en el contenido): sin autenticación, sin límite de tamaño de archivo, `snapshots:load` sin comparar sha256, redirecciones como "error de fuente", `||=` entre hilos, y D20.
 
 **Resultado:** 233 pruebas en verde y rubocop limpio. El Excel de entrega, regenerado, es idéntico en las 8 hojas.
+
+## 2026-11-06 16:21 — Sesión de verificación (Tarea 16, Paso 4), parte automática
+
+1. **Clon limpio** de `feature/catalog-pipeline` (`6656dc0`), siguiendo el README: `bin/setup --skip-server` terminó sin errores y cargó los 404 snapshots. No faltó ningún paso.
+2. **`bin/ci` en el clon:** en verde. Pasaron estilo, auditoría de gemas, importmap, Brakeman, 233 pruebas y seeds.
+3. **Subida por la pantalla y GIF:** pendiente, la hace el desarrollador en su navegador.
+4. **Estructura contra `ejemplo_prueba_tecnica.xlsx`:** las 6 hojas del ejemplo, en el mismo orden, con encabezados idénticos y la misma columna A en Métricas.
+   - **Tipos:** en cada columna, número o texto como en el ejemplo. Las únicas diferencias son del ejemplo, que mezcla tipos en una misma columna: algunos Modelo como número y algunos CC/CID como texto. Nuestro Excel usa un solo tipo por columna.
+5. **Doble corrida en el clon:** dos corridas seguidas dan contenido idéntico entre sí y con `docs/output/catalogo_bonaparte.xlsx`, en las 8 hojas. Había 404 snapshots antes y 404 después: ninguna solicitud de red.
+   - **Prueba nueva** `test/integration/delivered_catalog_test.rb`: regenera el Excel de entrega desde `db/snapshots` y lo compara hoja por hoja. Primero falló sin cargar los snapshots (la app intentó ir a la red y WebMock lo bloqueó); con ellos pasa. Así, los conteos del README quedan cubiertos por una prueba.

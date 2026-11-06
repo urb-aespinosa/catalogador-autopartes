@@ -66,7 +66,8 @@ Una descarga nueva es otro snapshot y puede cambiar el resultado, porque los sit
 ### Pruebas
 
 ```bash
-bin/rails test   # todas las pruebas; no usan red
+bin/rails test   # todas las pruebas; no usan red. Una de ellas regenera el Excel
+                 # de entrega desde db/snapshots y compara su contenido, hoja por hoja
 bin/ci           # rubocop, auditorías de seguridad y pruebas
 ```
 

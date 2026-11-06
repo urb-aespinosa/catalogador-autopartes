@@ -426,14 +426,19 @@ models:
 # D22 (b): generic names of lines with HD versions EPA does not rate.
 confirm_only:
   Chevrolet:
-    - Avalanche        # (b) the Avalanche 2500 (8.1L, 2002-2006) is outside EPA's coverage
+    # (b) the Avalanche 2500 (8.1L) existed only 2002-2006 and is outside EPA's
+    # coverage; from 2007 the line is 1500 only, so EPA may refute.
+    - { model: Avalanche, years: [ 2002, 2006 ] }
     - Express          # (b)
     - Express 2500     # (a)
     - Express 3500     # (a)
     - Silverado        # (b)
     - Silverado 2500   # (a)
     - Silverado 2500 HD # (a)
-    - Suburban         # (b)
+    # (b) no year limit on purpose: the Suburban 2500 existed until 2013, but
+    # there is no official source on whether an HD version (fleet 3500 HD)
+    # existed after 2013, so the range is not narrowed (D22, developer-approved).
+    - Suburban
     - Suburban 2500    # (a)
   GMC:
     - Savana           # (b)
@@ -442,7 +447,9 @@ confirm_only:
     - Sierra           # (b)
     - Sierra 2500      # (a)
     - Sierra 2500 HD   # (a)
-    - Yukon XL         # (b) the Yukon XL 2500 is in EPA only for 2011-2013
+    # (b) the Yukon XL 2500 existed 2000-2013 (EPA lists it only 2011-2013);
+    # from 2014 the Yukon XL is 1500 only, so EPA may refute.
+    - { model: Yukon XL, years: [ 2000, 2013 ] }
     - Yukon XL 2500    # (a)
 
 # D22: reviewed gaps in EPA's data (the engine existed but EPA does not list

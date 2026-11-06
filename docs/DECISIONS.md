@@ -554,8 +554,25 @@ Pero dos tipos de casos borraban filas correctas:
 - **`confirm_only` (b) ahora incluye Yukon XL (GMC) y Avalanche (Chevrolet).** Las dos son líneas con versiones 2500 fuera de la cobertura de EPA:
   - la Yukon XL 2500 solo aparece en EPA de 2011 a 2013;
   - la Avalanche 2500 (8.1L, 2002–2006) no aparece.
-  - Hoy no cambia ninguna fila de `run4`, pero sin este ajuste la regla quedaba inconsistente para otro dataset.
+  - ~~Hoy no cambia ninguna fila de `run4`~~. **Corrección (2026-11-06 13:58):** esa afirmación era falsa. La repetí del revisor sin comprobarla. Al poner la Avalanche genérica en `confirm_only`, cuatro aplicaciones que `run4` eliminaba (Avalanche 6.0L de 2010 a 2013, en MEX y USA, 8 filas) pasaron a conservarse. Se detectó al comparar `run4` con `run5` en la Tarea 6.
   - Un test fija la lista de genéricos del grupo (b).
+- **Ajuste 2026-11-06 13:58: `confirm_only` por años.**
+  - **Por qué:** la razón de D22(b) depende del año. Fuera de los años en que existió la versión que EPA no cubre, la cobertura de EPA es completa y sí puede refutar.
+  - **Formato:** una entrada de `confirm_only` puede llevar un rango de años, `{ model:, years: [inicio, fin] }`. `Epa#confirm_only?` ahora recibe el año.
+  - **Avalanche:** solo 2002–2006, los años de la Avalanche 2500 con 8.1L. Desde 2007 la línea es solo 1500.
+  - **Yukon XL:** solo 2000–2013, los años de la Yukon XL 2500. Desde 2014 es solo 1500.
+  - **Silverado, Sierra, Express y Savana:** sin límite, porque sus versiones HD (2500/3500) existieron en todos los años de cada línea.
+  - **Suburban, sin límite por incertidumbre:**
+    - La Suburban 2500 existió hasta 2013, y EPA la lista de 2011 a 2013.
+    - No hay fuente oficial sobre si hubo una versión HD después de 2013 (por ejemplo, una 3500 HD para flotillas).
+    - Acotar el rango sin evidencia sería inventarlo. Dejarlo abierto tiene como peor caso conservar filas marcadas `difiere`, en vez de borrar filas reales (criterio de D21).
+    - Hoy afecta a la "Suburban" genérica 6.0L de 2010 y de 2014 a 2020. Esas filas se conservan como `difiere`.
+    - Queda pendiente de una fuente.
+  - **Verificación en `run6`:**
+    - la Avalanche 6.0L 2010–2013 vuelve a quedar como `eliminada`;
+    - Aplicaciones baja de 1,457 a 1,449 (8 filas);
+    - "Motor · difiere" suma 237: 169 eliminadas, 66 conservadas por `confirm_only` y 2 por excepción revisada;
+    - `run6` y `run6b` tienen las 8 hojas idénticas.
 - **Validación dice qué pasó con la fila:** el texto de "Motor · difiere" termina con el resultado.
   - `eliminada`: catálogo USA, la aplicación sale de todos los mercados.
   - `se conserva solo MEX`: catálogo MEX, se niega solo la fila USA. Este cuarto texto no estaba en la propuesta aprobada; se agregó porque "eliminada" sería falso en ese caso.
@@ -631,4 +648,29 @@ Pero dos tipos de casos borraban filas correctas:
 - **Casos de control:**
   - **Allure 2005 5.3L** ya no aparece.
   - **Silverado 1500 2019 6.2L** se conserva en MEX y en USA.
-- **Fraco ahora tiene filas USA:** las aplicaciones Nissan de Fraco (catálogo MEX) ganan 14 filas USA de nivel a. EPA lista "Truck 2WD/4WD" con el mismo motor 2.4L de 4 cilindros esos años. Es la regla de D19: el otro mercado entra solo con nivel a.
+- **Fraco ahora tiene filas USA (ver Tarea 6 abajo para el combustible):** las aplicaciones Nissan de Fraco (catálogo MEX) ganan 14 filas USA de nivel a. EPA lista "Truck 2WD/4WD" con el mismo motor 2.4L de 4 cilindros esos años. Es la regla de D19: el otro mercado entra solo con nivel a.
+
+## 2026-11-06 15:15 — Hallazgo (adenda, Tarea 6): combustible de EPA solo en filas USA
+
+- **Entradas nuevas en `fuels.yml`,** revisadas por el desarrollador:
+  - Regular y Premium → Gasolina.
+  - Gasoline or E85 (FFV) → Flex.
+  - Diesel y Diesel (Diesel) → Diésel.
+  - CNG (CNG) → Gas natural.
+
+  Usan las mismas escrituras que ya existían, y un test lo fija.
+- **Sin entrada, a propósito:** híbridos (EPA no distingue FHEV de MHEV), bifuel y eléctricos. Quedan como "sin traducción".
+- **Corrida:** `tmp/run6.xlsx`, desde la caché (404 snapshots antes y después). Doble corrida contra `tmp/run6b.xlsx`: contenido idéntico en las 8 hojas.
+- **Aplicaciones:** 1,449 (977 USA, 472 MEX).
+  - **Diferencia con `run4`:** la bajada desde 1,500 se debe a filas que solo se distinguían por el combustible y ahora salen idénticas. Al comparar `run4` con `run5` sin la columna Combustible, no falta ninguna aplicación.
+  - **Otras 8 filas menos:** son la Avalanche 6.0L 2010–2013, que vuelve a eliminarse con `confirm_only` por años.
+- **Combustible en filas USA:** 473 llenas (337 Gasolina, 136 Flex) y 504 vacías.
+  - **Vacías por ambigüedad (132 casos únicos en Fuentes, con la lista de EPA):**
+    - "Gasoline or E85 (FFV), Regular": 89. Es el mismo motor en versión FFV y no FFV.
+    - "Regular (Hybrid)" solo: 25.
+    - Otras combinaciones con híbridos: 18.
+  - **Vacías por otra razón:** el resto son filas USA de nivel b, sin datos de EPA (HD, años sin la serie), o filas `confirm_only` cuyo motor no coincidió.
+- **Combustible en filas MEX:** ninguna lo lleva. Un catálogo USA no habla por México, y Fraco y Rexite (catálogos MEX) no publican combustible.
+- **Validación:**
+  - "Combustible · difiere": 8. El catálogo USA y EPA dan combustibles distintos; se conserva el del catálogo.
+  - "Traducción · sin traducción": 43 de EPA ("Regular (Hybrid)" 41, "Premium (Hybrid)" 2).

@@ -23,20 +23,25 @@ module Catalog
     EPA = "confirmado por EPA".freeze
     CATALOG = "según catálogo".freeze
 
-    def self.call(applications, inegi: InegiSales.default, epa: Epa.default) = new(inegi, epa).call(applications)
+    FUEL_ORIGIN = "combustible: EPA fueleconomy.gov".freeze
 
-    def initialize(inegi, epa)
+    def self.call(applications, inegi: InegiSales.default, epa: Epa.default, fuels: Normalizer::FUELS)
+      new(inegi, epa, fuels).call(applications)
+    end
+
+    def initialize(inegi, epa, fuels)
       @inegi = inegi
       @epa = epa
+      @fuels = fuels
     end
 
     # -> [applications, validations]
     def call(applications)
       @levels = Hash.new { |h, k| h[k] = [] }
       @missing = Hash.new { |h, k| h[k] = [] }
-      @engine_validations = []
+      @other_validations = []
       rows = applications.uniq.flat_map { resolve(_1) }
-      [ rows.uniq, market_validations + missing_validations + @engine_validations ]
+      [ rows.uniq, market_validations + missing_validations + @other_validations.uniq ]
     end
 
     private
@@ -84,19 +89,51 @@ module Catalog
       return catalog_row(app, "USA") unless configs
 
       record(app, "USA", EPA)
-      url = @epa.evidence_url(make: app.manufacturer, year: app.year, configurations: matches.presence || configs)
-      app.with(market: "USA", vpic_unknown: nil, evidence_urls: app.evidence_urls.to_a + [ [ EPA_ORIGIN, url ] ])
+      engine_configs = matches.presence || configs
+      url = @epa.evidence_url(make: app.manufacturer, year: app.year, configurations: engine_configs)
+      fuel, fuel_evidence = usa_fuel(app, engine_configs, url)
+      app.with(market: "USA", vpic_unknown: nil, fuel: fuel, evidence_urls: app.evidence_urls.to_a + [ [ EPA_ORIGIN, url ], *fuel_evidence ])
+    end
+
+    # D19: each datum is valid for the market of the source that backs it.
+    # A USA catalog's fuel is kept (a different single EPA fuel → difiere);
+    # otherwise EPA fills it only when its configurations give one value.
+    # An EPA fuel with no entry in fuels.yml is never guessed.
+    def usa_fuel(app, configs, url)
+      keys = configs.map(&:fuel_key).uniq.sort
+      unknown = keys.reject { @fuels.key?(_1) }
+      unknown.each { @other_validations << untranslated(_1, url) }
+      values = keys.filter_map { @fuels[_1] }.uniq
+      single = values.first if unknown.empty? && values.one?
+
+      if app.market == "USA" && app.fuel
+        record_fuel_mismatch(app, single, url) if single && single != app.fuel
+        return [ app.fuel, [] ]
+      end
+      return [ single, [ [ FUEL_ORIGIN, url ] ] ] if single
+
+      [ nil, [ [ FUEL_ORIGIN, url, "combustibles EPA: #{keys.join(', ')}" ] ] ]
+    end
+
+    def record_fuel_mismatch(app, epa_fuel, url)
+      @other_validations << Records::Validation.new(field: "Combustible", erp_value: nil, url: app.url, status: "difiere",
+                                                    source_value: "catálogo: #{app.fuel} · EPA: #{epa_fuel} · #{url}")
+    end
+
+    # Same record Normalizer#untranslated produces.
+    def untranslated(term, url)
+      Records::Validation.new(field: "Traducción", erp_value: nil, source_value: term, url: url, status: "sin traducción")
     end
 
     def kept_outcome(app)
-      @epa.confirm_only?(make: app.manufacturer, model: app.model) ? "se conserva (confirm_only)" : "se conserva (excepción revisada)"
+      @epa.confirm_only?(make: app.manufacturer, model: app.model, year: app.year) ? "se conserva (confirm_only)" : "se conserva (excepción revisada)"
     end
 
     # The outcome tells an auditor what happened to the row (D22).
     def record_engine_mismatch(app, configs, outcome)
       epa_engines = configs.map { "#{_1.displ}L #{_1.cylinders} cil" }.uniq.join(", ")
       url = @epa.evidence_url(make: app.manufacturer, year: app.year, configurations: configs)
-      @engine_validations << Records::Validation.new(
+      @other_validations << Records::Validation.new(
         field: "Motor", erp_value: nil, url: app.url, status: "difiere",
         source_value: "#{app.manufacturer} #{app.model} #{app.year} #{app.liters}L #{app.cylinders} cil · EPA: #{epa_engines} · #{url} · #{outcome}"
       )
@@ -114,7 +151,9 @@ module Catalog
 
       record(app, "MEX", SALES)
       evidence = sales.map { |model, units| [ INEGI_ORIGIN, InegiSales::SOURCE_URL, "#{model} · #{app.year} · #{units} unidades" ] }
-      app.with(market: "MEX", vpic_unknown: nil, evidence_urls: app.evidence_urls.to_a + evidence)
+      # A USA catalog's fuel does not speak for Mexico (D19).
+      app.with(market: "MEX", vpic_unknown: nil, fuel: app.market == "MEX" ? app.fuel : nil,
+               evidence_urls: app.evidence_urls.to_a + evidence)
     end
 
     def catalog_row(app, market)

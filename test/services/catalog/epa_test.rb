@@ -72,21 +72,40 @@ class Catalog::EpaTest < ActiveSupport::TestCase
   end
 
   test "generic names of lines with HD versions EPA does not rate are confirm_only (D22 b)" do
-    confirm_only = Catalog::Epa.default_confirm_only
+    names = Catalog::Epa.default_confirm_only.transform_values { |list| list.map { _1.is_a?(Hash) ? _1.fetch("model") : _1 } }
 
     { "Chevrolet" => [ "Avalanche", "Express", "Silverado", "Suburban" ], "GMC" => [ "Savana", "Sierra", "Yukon XL" ] }.each do |make, models|
-      models.each { assert_includes confirm_only.fetch(make), _1, "#{make} #{_1}" }
+      models.each { assert_includes names.fetch(make), _1, "#{make} #{_1}" }
     end
   end
 
   test "confirm_only? tells a confirm_only model from the rest" do
-    assert epa.confirm_only?(make: "Chevrolet", model: "Silverado 2500 HD")
-    assert_not epa.confirm_only?(make: "Buick", model: "Allure")
+    assert epa.confirm_only?(make: "Chevrolet", model: "Silverado 2500 HD", year: 2005)
+    assert_not epa.confirm_only?(make: "Buick", model: "Allure", year: 2005)
+  end
+
+  test "a confirm_only entry with years protects only those years (D22)" do
+    ranged = Catalog::Epa.new(rows: [], models: { "Chevrolet" => { "Avalanche" => [ "Avalanche 1500 2WD" ] } },
+                              confirm_only: { "Chevrolet" => [ { "model" => "Avalanche", "years" => [ 2002, 2006 ] } ] })
+
+    assert ranged.confirm_only?(make: "Chevrolet", model: "Avalanche", year: 2002)
+    assert ranged.confirm_only?(make: "Chevrolet", model: "Avalanche", year: 2006)
+    assert_not ranged.confirm_only?(make: "Chevrolet", model: "Avalanche", year: 2010)
+    assert ranged.refutes?(make: "Chevrolet", model: "Avalanche", year: 2010, liters: 6.0, cylinders: 8)
+  end
+
+  test "Avalanche and Yukon XL are confirm_only only in the years of their 2500 (D22)" do
+    epa = Catalog::Epa.default
+
+    assert epa.confirm_only?(make: "Chevrolet", model: "Avalanche", year: 2006)
+    assert_not epa.confirm_only?(make: "Chevrolet", model: "Avalanche", year: 2007)
+    assert epa.confirm_only?(make: "GMC", model: "Yukon XL", year: 2013)
+    assert_not epa.confirm_only?(make: "GMC", model: "Yukon XL", year: 2014)
   end
 
   test "every confirm_only entry is a mapped model" do
     models = Catalog::Epa.default_models
-    names = Catalog::Epa.default_confirm_only.flat_map { |make, list| list.map { [ make, _1 ] } } +
+    names = Catalog::Epa.default_confirm_only.flat_map { |make, list| list.map { [ make, _1.is_a?(Hash) ? _1.fetch("model") : _1 ] } } +
             Catalog::Epa.default_confirm_only_years.map { [ _1.fetch("make"), _1.fetch("model") ] }
 
     assert_empty names.reject { |make, model| models.dig(make, model) }

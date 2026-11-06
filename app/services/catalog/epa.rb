@@ -29,7 +29,11 @@ module Catalog
       @index = rows.group_by { [ _1["make"], _1["model"], _1["year"].to_i ] }
                    .transform_values { |group| group.map { configuration(_1) } }
       @models = models
-      @confirm_only = confirm_only.flat_map { |make, list| list.map { [ make, _1 ] } }.to_set
+      # An entry is a model name (every year) or { model:, years: [first, last] }:
+      # only the years in which the version outside EPA's coverage existed.
+      @confirm_only = confirm_only.flat_map do |make, list|
+        list.map { |entry| entry.is_a?(Hash) ? [ [ make, entry.fetch("model") ], Range.new(*entry.fetch("years")) ] : [ [ make, entry ], nil ] }
+      end.to_h
       @confirm_only_years = confirm_only_years.map { exception_key(_1.fetch("make"), _1.fetch("model"), _1.fetch("year"), _1.fetch("liters"), _1.fetch("cylinders")) }.to_set
     end
 
@@ -40,11 +44,16 @@ module Catalog
     # "difiere".
     def refutes?(make:, model:, year:, liters:, cylinders:)
       @models.dig(make, model).present? &&
-        !confirm_only?(make: make, model: model) &&
+        !confirm_only?(make: make, model: model, year: year) &&
         !@confirm_only_years.include?(exception_key(make, model, year, liters, cylinders))
     end
 
-    def confirm_only?(make:, model:) = @confirm_only.include?([ make, model ])
+    def confirm_only?(make:, model:, year:)
+      return false unless @confirm_only.key?([ make, model ])
+
+      years = @confirm_only[[ make, model ]]
+      years.nil? || years.cover?(year.to_i)
+    end
 
     # nil = no evidence either way: the model is not mapped, or EPA lists none
     # of its equivalent models that year (e.g. heavy-duty pickups).

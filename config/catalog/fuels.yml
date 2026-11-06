@@ -6,3 +6,13 @@ CNG: Gas natural
 FULL HYBRID EV-GAS (FHEV): Híbrido FHEV
 FULL HYBRID EV-FLEX (FHEV): Híbrido FHEV
 MILD HYBRID EV-GAS (MHEV): Híbrido MHEV
+# EPA fueleconomy.gov fuel keys (fuelType, plus " (atvType)" when present),
+# reviewed by the developer (D19, Task 6). Same spellings as above. No entry,
+# on purpose, for hybrids (EPA does not tell FHEV from MHEV), bifuel and
+# electric: they stay "sin traducción" instead of being guessed.
+Regular: Gasolina
+Premium: Gasolina
+Gasoline or E85 (FFV): Flex
+Diesel: Diésel
+Diesel (Diesel): Diésel
+CNG (CNG): Gas natural

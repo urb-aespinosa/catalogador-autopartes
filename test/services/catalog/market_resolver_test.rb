@@ -61,6 +61,85 @@ class Catalog::MarketResolverTest < ActiveSupport::TestCase
 
   def resolve_usa(*apps) = Catalog::MarketResolver.call(apps, inegi: inegi, epa: epa)
 
+  FUELS = { "Regular" => "Gasolina", "Premium" => "Gasolina", "Gasoline or E85 (FFV)" => "Flex", "Diesel" => "Diésel" }.freeze
+
+  def fuel_epa
+    Catalog::Epa.new(
+      models: { "Chevrolet" => { "Silverado 1500" => [ "Silverado C15 2WD" ] }, "Nissan" => { "D21" => [ "Truck 2WD" ] } },
+      rows: [
+        vehicle(2015, "Chevrolet", "Silverado C15 2WD", 4.3, 6, "Regular"),
+        vehicle(2015, "Chevrolet", "Silverado C15 2WD", 6.2, 8, "Premium"),
+        vehicle(2016, "Chevrolet", "Silverado C15 2WD", 5.3, 8, "Regular"),
+        { **vehicle(2016, "Chevrolet", "Silverado C15 2WD", 5.3, 8, "Gasoline or E85"), "id" => "99", "atvType" => "FFV" },
+        { **vehicle(2014, "Chevrolet", "Silverado C15 2WD", 4.3, 6, "Regular"), "atvType" => "Hybrid" },
+        vehicle(1993, "Nissan", "Truck 2WD", 2.4, 4, "Regular")
+      ]
+    )
+  end
+
+  def resolve_fuel(*apps) = Catalog::MarketResolver.call(apps, inegi: inegi, epa: fuel_epa, fuels: FUELS)
+
+  def silverado(year, liters, cylinders, fuel: nil)
+    application(manufacturer: "Chevrolet", model: "Silverado 1500", year: year, liters: liters, cylinders: cylinders, fuel: fuel, market: "USA")
+  end
+
+  test "a single EPA fuel fills the USA row only" do
+    apps, = resolve_fuel(silverado(2015, 4.3, 6))
+
+    mex, usa = apps.partition { _1.market == "MEX" }.map(&:sole)
+    assert_equal "Gasolina", usa.fuel
+    assert_nil mex.fuel
+    assert_includes usa.evidence_urls, [ "combustible: EPA fueleconomy.gov",
+                                         "https://www.fueleconomy.gov/ws/rest/vehicle/menu/options?year=2015&make=Chevrolet&model=Silverado%20C15%202WD" ]
+  end
+
+  test "several EPA fuels leave it empty with the list in Fuentes" do
+    apps, = resolve_fuel(silverado(2016, 5.3, 8))
+
+    usa = apps.find { _1.market == "USA" }
+    assert_nil usa.fuel
+    assert_includes usa.evidence_urls, [ "combustible: EPA fueleconomy.gov",
+                                         "https://www.fueleconomy.gov/ws/rest/vehicle/menu/options?year=2016&make=Chevrolet&model=Silverado%20C15%202WD",
+                                         "combustibles EPA: Gasoline or E85 (FFV), Regular" ]
+  end
+
+  test "a catalog fuel is kept and a different EPA fuel is recorded as difiere" do
+    apps, validations = resolve_fuel(silverado(2015, 4.3, 6, fuel: "Diésel"))
+
+    assert_equal "Diésel", apps.find { _1.market == "USA" }.fuel
+    assert_equal [ [ nil, "catálogo: Diésel · EPA: Gasolina · https://www.fueleconomy.gov/ws/rest/vehicle/menu/options?year=2015&make=Chevrolet&model=Silverado%20C15%202WD", "difiere" ] ],
+                 validations.select { _1.field == "Combustible" }.map { [ _1.erp_value, _1.source_value, _1.status ] }
+  end
+
+  test "a USA catalog fuel never reaches the MEX row" do
+    apps, = resolve_fuel(silverado(2015, 4.3, 6, fuel: "Gasolina"))
+
+    assert_nil apps.find { _1.market == "MEX" }.fuel
+    assert_equal "Gasolina", apps.find { _1.market == "USA" }.fuel
+  end
+
+  test "a MEX catalog fuel stays on the MEX row; the USA row takes EPA's" do
+    apps, = resolve_fuel(application(manufacturer: "Nissan", model: "D21", year: 1993, liters: 2.4, cylinders: 4, fuel: "Diésel", market: "MEX"))
+
+    assert_equal [ [ "MEX", "Diésel" ], [ "USA", "Gasolina" ] ], apps.map { [ _1.market, _1.fuel ] }
+  end
+
+  test "EPA fuels reuse the spellings fuels.yml already has for other sources" do
+    epa_keys = [ "Regular", "Premium", "Gasoline or E85 (FFV)", "Diesel", "Diesel (Diesel)", "CNG (CNG)" ]
+    fuels = Catalog::Normalizer::FUELS
+
+    assert_empty epa_keys - fuels.keys
+    assert_empty epa_keys.map { fuels[_1] } - fuels.except(*epa_keys).values
+    assert_empty fuels.keys.grep(/Hybrid|Electricity|Bifuel/)
+  end
+
+  test "an unknown EPA fuel is not guessed" do
+    apps, validations = resolve_fuel(application(manufacturer: "Chevrolet", model: "Silverado 1500", year: 2014, liters: 4.3, cylinders: 6, market: "USA"))
+
+    assert_nil apps.find { _1.market == "USA" }.fuel
+    assert_includes validations.map { [ _1.field, _1.source_value, _1.status ] }, [ "Traducción", "Regular (Hybrid)", "sin traducción" ]
+  end
+
   def epa_evidence?(app) = app.evidence_urls.any? { _1.first == "mercado USA: EPA fueleconomy.gov" }
 
   test "EPA engine match gives USA level a" do

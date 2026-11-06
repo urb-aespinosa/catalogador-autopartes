@@ -1099,6 +1099,9 @@ end
   - alias de capacidad para vPIC: qué son y que en el Excel se conserva el nombre de Elgin (D14).
   - limitación conocida (D14): vPIC confirma línea de modelo + año, no la versión de carga (1500/2500/3500). Pueden aparecer combinaciones de versión y año que no existieron (por ejemplo, Express 1500 después de 2014 o Suburban 2500 después de 2013). Ninguna fuente oficial gratuita publica años por versión. La aplicación sigue respaldada por Elgin.
   - `poppler-utils` también en el `Dockerfile` (D14; pendiente menor del revisor).
+  - Fabricantes soportados (`Sources::Registry`: ELGIN, FRACO, REXITE, SAFETY) (D18).
+  - Una marca sin adaptador sale con lo mínimo en Catálogo, y en Validación con Estado `sin fuente configurada`, distinto de `no encontrado` (D18).
+  - Cómo agregar un adaptador nuevo, en pasos: clase en `app/services/sources/` que devuelve `Sources::Result`; registro en `Sources::Registry::ADAPTERS`; fixtures de snapshots y tests sin red; diccionarios de normalización si hacen falta (D18).
   - Commit.
 - [ ] **Step 4: Sesión de verificación** (dedicada, antes del lunes 9 en la mañana):
   1. Clonar limpio en un directorio temporal, seguir el README al pie de la letra y anotar cualquier paso faltante.

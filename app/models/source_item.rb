@@ -1,8 +1,8 @@
 class SourceItem < ApplicationRecord
-  STATUSES = %w[pending fetching done not_found error].freeze
+  STATUSES = %w[pending fetching done not_found no_source error].freeze
   STATUS_LABELS = {
     "pending" => "pendiente", "fetching" => "consultando fuente", "done" => "listo",
-    "not_found" => "no encontrado", "error" => "error"
+    "not_found" => "no encontrado", "no_source" => "sin fuente configurada", "error" => "error"
   }.freeze
 
   belongs_to :run

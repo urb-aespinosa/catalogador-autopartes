@@ -33,7 +33,9 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
 
   def process(item, **options) = Catalog::ItemProcessor.new(item, **options).call
 
-  test "a manufacturer without official source: no rows, product from the ERP group, not found" do
+  # D18: "no encontrado" means the source was searched and the part was not
+  # there; a manufacturer with no adapter was never searched.
+  test "a manufacturer without official source: no rows, product from the ERP group, sin fuente configurada" do
     item = source_item(manufacturer: "REVO", item_group: "KIT DE DISTRIBUCION", part_number: "TK1283-1", unit: "JUEGO",
                        description: "9-0511S SA-76260 DDM-77020 CHRYSLER DURANGO JOURNEY V6 3.6 SOHC 24 VAL PENTASTAR 11/13")
 
@@ -41,9 +43,25 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
 
     assert_equal "KIT DE DISTRIBUCIÓN", r.product
     assert_empty r.applications
-    assert_includes r.validations.map { [ _1.field, _1.status ] }, [ "Fuente", "no encontrado" ]
-    assert_equal [ "not_found", "KIT DE DISTRIBUCIÓN" ], [ item.reload.status, item.product ]
+    source_rows = r.validations.select { _1.field == "Fuente" }.map { [ _1.erp_value, _1.source_value, _1.status ] }
+    assert_equal [ [ "REVO", nil, "sin fuente configurada" ] ], source_rows
+    # The hint rows (Armadora, Años, Intercambio…) were not searched either.
+    assert_operator r.validations.size, :>, 1
+    assert_equal [ "sin fuente configurada" ], r.validations.map(&:status).uniq
+    assert_equal [ "no_source", "KIT DE DISTRIBUCIÓN" ], [ item.reload.status, item.product ]
+    assert_equal "sin fuente configurada", SourceItem::STATUS_LABELS.fetch(item.status)
     assert_equal r, Catalog::Records::ItemResult.from_h(item.result)
+  end
+
+  test "a configured source that does not have the part stays no encontrado" do
+    item = source_item(manufacturer: "ELGIN", item_group: "BOMBA DE ACEITE", part_number: "ZZ-0000", unit: "PIEZA", description: "")
+    adapter = Struct.new(:result) { def call(**) = result }.new(Sources::Result.not_found(market: "MEX"))
+    registry = Struct.new(:adapter) { def for(_) = adapter }.new(adapter)
+
+    r = process(item, registry: registry)
+
+    assert_equal [ [ "Fuente", "no encontrado" ] ], r.validations.select { _1.field == "Fuente" }.map { [ _1.field, _1.status ] }
+    assert_equal "not_found", item.reload.status
   end
 
   test "a source error is recorded as error de fuente and does not raise" do
@@ -133,6 +151,6 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
     run = Catalog::Pipeline.run(file_fixture("data_prueba_tecnica.xlsx"))
 
     assert_equal "processing", run.reload.status
-    assert_equal %w[done done done done not_found], run.source_items.map(&:status)
+    assert_equal %w[done done done done no_source], run.source_items.map(&:status)
   end
 end

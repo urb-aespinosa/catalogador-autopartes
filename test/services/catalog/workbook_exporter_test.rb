@@ -124,7 +124,7 @@ class Catalog::WorkbookExporterTest < ActiveSupport::TestCase
   test "Validación reports source status per part" do
     validacion = rows("Validación")
 
-    assert_includes validacion.map { _1.values_at(0, 1, 5) }, [ "TK1283-1", "Fuente", "no encontrado" ]
+    assert_includes validacion.map { _1.values_at(0, 1, 5) }, [ "TK1283-1", "Fuente", "sin fuente configurada" ]
     assert_includes validacion.map { _1.values_at(0, 1, 2, 5) }, [ "HL-7025S", "Unidad", "PZA", "difiere" ]
   end
 

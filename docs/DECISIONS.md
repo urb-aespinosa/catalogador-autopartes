@@ -357,3 +357,17 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 - Se guarda también el **resultado calculado** (`formula_values`). Así Roo y los visores que no recalculan (como la vista previa de macOS) muestran el número.
 - El lector de los tests devuelve las fórmulas como `WorkbookReader::Formula`, nunca como texto. Así, el test de Métricas y el de doble corrida distinguen una fórmula de un texto.
 - Test nuevo: el XML de B6, B10 y B14 tiene un elemento `<f>`, no es `inlineStr` y su valor guardado es la resta correcta.
+
+## 2026-11-06 09:26 — D18. "Sin fuente configurada" vs. "no encontrado"
+
+**Contexto:** al correr `ejemplo_prueba_tecnica.xlsx`, todas las piezas salvo las de Fraco salían "no encontrado". En realidad no se buscaron: esas marcas no tienen adaptador, porque cubrirlas no era meta del spec.
+
+**Decisión (la opción más simple):** un **Estado propio** en Validación.
+- `no encontrado`: se buscó en la fuente oficial y la pieza o el dato no estaba.
+- `sin fuente configurada`: la marca no tiene adaptador en `Sources::Registry`, así que no se buscó nada.
+- Para esa pieza, **todas** sus filas de Validación llevan `sin fuente configurada`: la fila Fuente y las de cada pista de la descripción (Armadora, Años, Intercambio…). Valor fuente queda vacío.
+- La pantalla de progreso muestra "sin fuente configurada" (estado `no_source` de la pieza), no "no encontrado".
+
+**Por qué un Estado y no un texto en Valor fuente:** Estado ya es la columna por la que se filtra Validación. Con un valor propio, un filtro muestra todo lo que faltó por adaptador, sin mezclar un motivo con un valor de la fuente.
+
+**README (Tarea 16):** fabricantes soportados; qué sale para una marca sin adaptador (lo mínimo en Catálogo y en Validación); pasos para agregar un adaptador nuevo.

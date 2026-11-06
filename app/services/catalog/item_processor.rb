@@ -28,6 +28,8 @@ module Catalog
 
       normalized = Normalizer.call(item: @item, result: result)
       reconciled = Reconciler.call(item: @item, hints: hints, result: normalized, product_kind: result&.product_kind)
+      # D18: with no source configured nothing was searched, so no hint is "no encontrado".
+      reconciled = reconciled.map { _1.with(status: "sin fuente configurada") } if @status == "no_source"
       final = normalized.with(validations: @validations + normalized.validations + reconciled)
       @item.update!(status: @status, product: final.product, result: final.to_h)
       final
@@ -40,7 +42,7 @@ module Catalog
     # this part only: the run goes on and the workbook is still produced.
     def official_result(hints)
       adapter = @registry.for(@item.manufacturer)
-      return not_found(@item.manufacturer, nil) unless adapter
+      return no_source unless adapter
 
       result = adapter.call(item: @item, hints: hints)
       return not_found(@item.manufacturer, nil) unless result.status == :found
@@ -89,9 +91,17 @@ module Catalog
       Records::Interchange.new(number: entry["number"], brand: entry["brand"], kind: nil, url: entry["url"], origin: "oficial")
     end
 
+    # The source was searched and does not have the part.
     def not_found(manufacturer, url)
       @status = "not_found"
       @validations << Records::Validation.new(field: "Fuente", erp_value: manufacturer, source_value: nil, url: url, status: "no encontrado")
+      nil
+    end
+
+    # D18: no adapter for this manufacturer, so nothing was searched.
+    def no_source
+      @status = "no_source"
+      @validations << Records::Validation.new(field: "Fuente", erp_value: @item.manufacturer, source_value: nil, url: nil, status: "sin fuente configurada")
       nil
     end
 

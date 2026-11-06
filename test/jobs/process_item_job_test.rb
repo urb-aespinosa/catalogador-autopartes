@@ -26,7 +26,7 @@ class ProcessItemJobTest < ActiveJob::TestCase
     assert_enqueued_jobs 1, only: FinalizeRunJob do
       ProcessItemJob.perform_now(run.source_items.find_by(part_number: "TK1283-1"))
     end
-    assert_equal "not_found", run.source_items.find_by(part_number: "TK1283-1").status
+    assert_equal "no_source", run.source_items.find_by(part_number: "TK1283-1").status
   end
 
   test "finalize is enqueued exactly once" do

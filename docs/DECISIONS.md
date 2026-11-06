@@ -414,3 +414,32 @@ Todas las consultas automáticas usaron el User-Agent del proyecto y una solicit
 - **Comprobación útil:** Buick Lacrosse/Allure 2005 solo tiene 3.6 L y 3.8 L. Así EPA **refuta "Allure 2005 5.3L"**.
 - **Matiz para combustible:** en 2016, el Silverado C15 5.3 L aparece **con y sin FFV**. Si el mismo motor tiene varias opciones de combustible ese año, el combustible sigue siendo ambiguo y queda vacío, igual que en D15.
 - **Cobertura:** no incluye pickups pesadas (Silverado/Sierra 2500/3500 HD). Sí incluye Express 2500/3500 Passenger en 2016. No incluye modelos solo mexicanos.
+
+## 2026-11-06 11:44 — D19. Mercado por ventas, verificación de motor y combustible con EPA (reemplaza el Mercado de D3)
+
+**Contexto:** respuesta del evaluador: *"la idea es que encuentres la manera de conseguir, o generar, esa data… quiero evaluar qué estrategias eliges y cómo planteas la solución cuando hay mucha incertidumbre"*. El principio se mantiene: todo comprobable, nada inventado. Detalle completo en `docs/superpowers/specs/2026-11-06-mercado-adenda-design.md` (aprobada).
+
+**Decisión**
+- **El mercado se define por dónde se vendió el vehículo**, por niveles y por mercado:
+  - **Nivel a, confirmado por ventas.** MEX: ventas INEGI > 0 en el mismo año calendario que el año modelo (criterio estricto). USA: EPA lista ese modelo-año y, si la aplicación trae motor, tiene una configuración con motor coincidente.
+  - **Nivel b, según catálogo.** Solo para el mercado del propio catálogo. El otro mercado entra únicamente con nivel a.
+  - Una fila por mercado. Validación registra qué nivel se usó.
+- **Rol de las fuentes USA:** vPIC confirma que el modelo existió ese año (incluye HD). EPA verifica motor y combustible donde tiene cobertura.
+- **Motor refutado por EPA** (misma cilindrada a 1 decimal y mismos cilindros; ninguna configuración coincide):
+  - catálogo USA → la fila se elimina en todos los mercados;
+  - catálogo MEX → se conserva la fila MEX y solo se niega la USA.
+  - En los dos casos, Validación registra `difiere` con los dos motores y las dos URLs.
+- **Combustible:** cada dato vale para el mercado de la fuente que lo respalda.
+  - EPA llena Combustible solo en la fila USA, y solo si hay un único combustible para ese motor.
+  - La fila MEX queda vacía, salvo que lo indique una fuente mexicana.
+  - Si el catálogo ya da un combustible y EPA otro, se conserva el del catálogo y Validación registra `difiere`.
+- **Equivalencias de nombres** en `config/catalog/inegi_models.yml` y `config/catalog/epa_models.yml`, revisadas por el desarrollador antes del commit.
+- **EPA** se consulta preferentemente con su archivo masivo oficial (`vehicles.csv`), versionado con procedencia.
+- **Submodelo** vacío: ninguna fuente oficial gratuita lo publica. El README describe la estrategia para producción (VCdb licenciada o acuerdos con fabricantes).
+- **Prioridad:**
+  1. La Tarea 16 completa no se recorta.
+  2. En la adenda: INEGI, luego EPA motor, luego EPA combustible.
+  3. El adaptador DC/Dacomsa es lo primero que se recorta.
+- **La entrega se mueve al sábado 2026-11-07:** calidad primero.
+
+**Limitaciones conocidas (README):** año de venta vs. año modelo; MEX sin verificación de motor; EPA no cubre HD ni modelos solo mexicanos; INEGI empieza en 2005; "General Motors" es un grupo.

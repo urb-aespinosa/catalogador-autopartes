@@ -6,7 +6,7 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 
 | Sesión | Fecha | Inicio | Fin | Horas | Qué se hizo |
 |---|---|---|---|---|---|
-| 1 | 2026-11-05 | 11:07 | (en curso) | | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming, decisiones D1–D9, spec de diseño (borrador) |
+| 1 | 2026-11-05 | 11:07 | 18:12 | 7.1 | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming, decisiones D1–D16, spec aprobado, plan, Tareas 1–15 (pipeline completo, 3 revisiones independientes, UI con progreso en vivo, primera corrida real y doble corrida idéntica) |
 
 ---
 
@@ -296,3 +296,36 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 **3. README (Tarea 16)**
 - Explicar que la hoja Intercambios sale con pocas filas porque las equivalencias no tienen confirmación oficial (D9), y que cada número aparece en Validación con su motivo.
 - Documentar `poppler` (`pdftotext`) en el README y en el `Dockerfile`. Era un pendiente menor del revisor.
+
+## 2026-11-05 18:12 — D15. Combustible en aplicaciones de Elgin
+
+**Contexto:** en la corrida 1 salió, por ejemplo, "Buick Allure 2005 5.3L Híbrido FHEV", un vehículo que no existió. El registro de motor de Elgin lista varios combustibles (Flex, GNC, híbridos, gasolina) para todos sus modelos, y se generaba una fila por cada combustible.
+
+**Decisión**
+- Se genera **una fila por motor y modelo**, nunca una por combustible.
+- Si el motor lista **un solo** combustible, se usa.
+- Si lista **varios**, `Combustible` queda **vacío** y la lista original queda en Fuentes como valor original ("combustibles del motor: …").
+
+**Por qué:** la fuente no dice qué modelo usó qué combustible. Elegir uno sería inventar.
+
+**Resultado con los datos reales (corrida desde la caché)**
+- Aplicaciones: **3,599 → 1,187** filas. HL-7025S pasa de 3,542 a 1,130: 89 con "Gasolina" y 1,041 con Combustible vacío.
+- Ya no aparece el Buick Allure FHEV.
+- Una segunda corrida dio contenido **idéntico** celda por celda.
+
+## 2026-11-05 18:12 — D16. Intercambios del ERP "confirmados por aplicación" (matiz de D9)
+
+**Decisión**
+- Un número de intercambio de la descripción del ERP entra a la hoja Intercambios si el **catálogo oficial de esa marca** confirma dos cosas:
+  1. que el número **existe**, y
+  2. que es para **el mismo motor y rango de años** que nuestra pieza.
+- A esto se le llama **"confirmado por aplicación"**.
+- En Fuentes se registran **las dos URLs**: la de nuestra pieza y la del catálogo de la otra marca.
+- Si el número no existe o la aplicación no coincide, se queda en Validación.
+- **Nunca** se buscan equivalentes solo por características parecidas.
+
+**Siguiente paso (sesión 2, antes de la Tarea 16):** time-box de 30 minutos para buscar esa confirmación, **sin credenciales incrustadas**, en:
+- DC Gaskets, `catalogo.dcp.com.mx` (FS-001225);
+- Quebec / TF Victor (QJC20G, JC20);
+- Moresa (83-301);
+- Elgin (HL7011).

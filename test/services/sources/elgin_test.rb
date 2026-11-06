@@ -42,13 +42,26 @@ class Sources::ElginTest < ActiveSupport::TestCase
     assert_includes engines, [ "BUICK", 5.3, 325, 1999..2016 ]
   end
 
-  test "one row per engine, model and fuel, years left unexpanded" do
+  test "one row per engine and model, years left unexpanded" do
     rows = result.applications.select { _1.model == "Avalanche" && _1.cid == 364 && _1.years == (2007..2020) }
 
+    assert_equal 1, rows.size
     assert_equal 8, rows.first.cylinders
-    assert_includes rows.map(&:fuel), "FLEX"
-    assert_includes rows.map(&:fuel), "CNG"
     assert rows.all? { _1.year.nil? && _1.market == "USA" && _1.origin == "oficial" }
+  end
+
+  test "an engine listing several fuels leaves Combustible empty and keeps the list as original (D15)" do
+    row = result.applications.find { _1.model == "Avalanche" && _1.cid == 364 && _1.years == (2007..2020) }
+
+    assert_nil row.fuel
+    assert_includes row.original, "CNG, FLEX, FULL HYBRID EV-FLEX (FHEV), FULL HYBRID EV-GAS (FHEV), GAS"
+  end
+
+  test "an engine listing a single fuel uses it (D15)" do
+    rows = result.applications.select { _1.manufacturer == "CADILLAC" && _1.cid == 364 && _1.years == (2005..2009) }
+
+    assert rows.any?
+    assert_equal [ "GAS" ], rows.map(&:fuel).uniq
   end
 
   test "unknown part number is not_found" do

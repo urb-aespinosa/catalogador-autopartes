@@ -1061,6 +1061,23 @@ end
 
 ---
 
+### Task 15b: Time-box — intercambios del ERP confirmados por aplicación (D16, 30 min de investigación)
+
+- [ ] **Step 1:** Buscar en los catálogos oficiales, **sin credenciales incrustadas**:
+  - DC Gaskets `catalogo.dcp.com.mx` (FS-001225);
+  - Quebec / TF Victor (QJC20G, JC20);
+  - Moresa (83-301);
+  - Elgin (HL7011).
+
+  Un número cuenta como confirmado si existe y su aplicación es el mismo motor y rango de años que nuestra pieza.
+- [ ] **Step 2:** Registrar el resultado en `docs/DECISIONS.md` con la hora.
+- [ ] **Step 3 (solo si hay confirmaciones legibles sin navegador):**
+  - adaptador por marca, con fixtures y tests;
+  - una fila en Intercambios por número confirmado;
+  - dos URLs en Fuentes: la de nuestra pieza y la del otro catálogo.
+
+  Lo que no se confirma queda en Validación.
+
 ### Task 16: Snapshots para la entrega, README y sesión de verificación
 
 **Files:**

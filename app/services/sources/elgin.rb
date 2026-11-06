@@ -101,16 +101,21 @@ module Sources
       start..finish
     end
 
+    # D15: one row per engine and model. The engine record does not say which
+    # model used which fuel, so a fuel is set only when the engine lists one;
+    # with several, Combustible stays empty and the list goes to Fuentes.
     def engine_applications(engine)
       page = fetch_html(engine[:url])
       facts = engine_facts(page, engine[:url])
+      fuel = facts[:fuels].first if facts[:fuels].one?
+      fuels_note = facts[:fuels].many? ? " — combustibles del motor: #{facts[:fuels].join(', ')}" : ""
 
-      facts[:models].product(facts[:fuels]).map do |model, fuel|
+      facts[:models].map do |model|
         application(
           manufacturer: engine[:manufacturer], model: model, years: engine[:years],
           liters: facts[:liters], cid: facts[:cid], cylinders: facts[:cylinders], fuel: fuel,
           market: MARKET, url: engine[:url],
-          original: "#{engine[:manufacturer]} #{facts[:cid]}CID (#{facts[:liters]}L) #{engine[:years].first}-#{engine[:years].last}: #{model}"
+          original: "#{engine[:manufacturer]} #{facts[:cid]}CID (#{facts[:liters]}L) #{engine[:years].first}-#{engine[:years].last}: #{model}#{fuels_note}"
         )
       end
     end
@@ -126,7 +131,7 @@ module Sources
         liters: number(labels["Liters"])&.to_f,
         cid: number(labels["CID"])&.to_i,
         cylinders: number(labels["Cyl."])&.to_i,
-        fuels: fuels.presence || [ nil ]
+        fuels: fuels
       }
     end
 

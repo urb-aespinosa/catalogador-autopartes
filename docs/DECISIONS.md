@@ -731,3 +731,20 @@ Pero dos tipos de casos borraban filas correctas:
 3. **Protección contra una respuesta atrasada:** si el aviso final llega mientras la consulta de ponerse al día sigue en camino, la respuesta de esa consulta se descarta, para no reemplazar el estado final con uno más viejo.
 
 **Tests:** el job final transmite el bloque completo, con cada pieza y la descarga; la página declara el controlador con su URL; el formato `turbo_stream` devuelve el progreso actual. El JavaScript no tiene test automático, porque no hay pruebas de navegador (D17). Se verifica repitiendo la prueba desde el navegador.
+
+## 2026-11-06 16:49 — Hallazgo (verificación manual): regresión, "Generar catálogo" ya no avanzaba
+
+**Qué vio el desarrollador:** al dar clic en "Generar catálogo", la página se quedaba en el formulario, aunque la corrida sí se procesaba en el servidor.
+
+**Causa:** es consecuencia de la corrección de las 16:42.
+- Turbo envía el formulario aceptando primero turbo streams (`Accept: text/vnd.turbo-stream.html, text/html, application/xhtml+xml`) y sigue la redirección con el mismo encabezado.
+- En el log, `POST /runs` y luego `GET /runs/19` se procesaron "as TURBO_STREAM".
+- Como ya existía `show.turbo_stream.erb`, Rails respondió con un stream en lugar de la página, y Turbo no navegó.
+
+**Por qué no lo detectaron las pruebas:** el test de subida enviaba el `Accept` por defecto (HTML), no el que manda Turbo.
+
+**Corrección:**
+- Ponerse al día tiene su propia ruta, `GET /runs/:id/progress`, que solo responde turbo stream.
+- `show` responde solo HTML.
+
+**Test de regresión, que primero falló:** envía el formulario con el `Accept` de Turbo, sigue la redirección con el mismo encabezado y comprueba que llega la página HTML completa de la corrida, con sus 5 piezas.

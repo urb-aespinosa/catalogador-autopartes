@@ -44,7 +44,9 @@ bin/dev                   # levanta el servidor en http://localhost:3000
 2. La pantalla muestra el avance pieza por pieza mientras trabaja (Turbo Streams).
 3. Al terminar, descarga el Excel.
 
-‹Captura o GIF de la pantalla de progreso: se agrega en la sesión de verificación.›
+![Progreso en vivo por pieza](docs/images/progreso.gif)
+
+Grabación de la sesión de verificación: se sube el Excel de la prueba y cada pieza cambia de estado sola, sin recargar, hasta que aparece el botón de descarga.
 
 ### Desde la terminal
 
@@ -298,7 +300,8 @@ Este proyecto se hizo con **Claude Code** (un asistente de programación con IA)
 | Sesión | Fecha | Horas | Qué se hizo |
 |---|---|---|---|
 | 1 | 2026-11-05 | 7.1 | Brief, spike de fuentes, decisiones D1–D16, spec, plan y pipeline completo |
-| 2 | 2026-11-06 | ‹se cierra al terminar la sesión› | CI, intercambios en catálogos oficiales, adenda de mercado (D17–D22), README y verificación |
+| 2 | 2026-11-06 | 8.7 | CI, intercambios en catálogos oficiales, adenda de mercado (D17–D22), revisión final, README y verificación |
+| | | **15.8** | **Total** |
 
 ## Documentación del proyecto
 

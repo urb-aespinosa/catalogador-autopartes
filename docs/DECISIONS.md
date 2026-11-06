@@ -7,7 +7,8 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 | Sesión | Fecha | Inicio | Fin | Horas | Qué se hizo |
 |---|---|---|---|---|---|
 | 1 | 2026-11-05 | 11:07 | 18:12 | 7.1 | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming, decisiones D1–D16, spec aprobado, plan, Tareas 1–15 (pipeline completo, 3 revisiones independientes, UI con progreso en vivo, primera corrida real y doble corrida idéntica) |
-| 2 | 2026-11-06 | 08:19 | (en curso) | | Diagnóstico del CI de GitHub Actions, D17, cierre de PRs de dependabot, Tarea 15b |
+| 2 | 2026-11-06 | 08:19 | 17:02 | 8.7 | Diagnóstico del CI de GitHub Actions, D17, cierre de PRs de dependabot, Tarea 15b, adenda de mercado (D19–D22, Tareas 1–7), Tarea 16 (corrida de entrega, snapshots, README, CI en verde con el PR #5), revisión final de la rama con sus correcciones, y sesión de verificación con dos hallazgos de la pantalla en vivo |
+| | | | | **15.8** | **Total** |
 
 ---
 
@@ -748,3 +749,13 @@ Pero dos tipos de casos borraban filas correctas:
 - `show` responde solo HTML.
 
 **Test de regresión, que primero falló:** envía el formulario con el `Accept` de Turbo, sigue la redirección con el mismo encabezado y comprueba que llega la página HTML completa de la corrida, con sus 5 piezas.
+
+## 2026-11-06 17:02 — Sesión de verificación cerrada (Tarea 16, Paso 4)
+
+- **Pantalla (paso 3), probada por el desarrollador después de las dos correcciones:**
+  - "Generar catálogo" navega a la corrida.
+  - Cada pieza se actualiza sola hasta su estado final y aparece el botón de descarga, sin recargar.
+- **Excel descargado desde la pantalla:** idéntico a `docs/output/catalogo_bonaparte.xlsx` en las 8 hojas, celda por celda.
+- **GIF del progreso en vivo:** `docs/images/progreso.gif` (367 KB, 800 px, 8 cuadros por segundo), hecho con `ffmpeg` desde la grabación del desarrollador. El video original no se sube al repo. El README lo muestra en "Desde el navegador".
+- **Pasos 1, 2, 4 y 5:** ver la entrada de las 16:21.
+- **Horas:** la sesión 2 cierra a las 17:02, con 8.7 h. El total es 15.8 h.

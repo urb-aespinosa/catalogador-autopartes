@@ -38,6 +38,12 @@ class ProcessItemJobTest < ActiveJob::TestCase
     assert_equal "finalizing", run.reload.status
   end
 
+  test "an item that ended in error does not block finalize" do
+    run = run_with_items(statuses: %w[done error])
+
+    assert_enqueued_jobs(1, only: FinalizeRunJob) { run.finalize_if_complete! }
+  end
+
   test "finalize waits while items are pending" do
     run = run_with_items(statuses: %w[done fetching])
 

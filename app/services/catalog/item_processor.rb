@@ -8,6 +8,7 @@ module Catalog
   #
   # It never raises for source problems: a failed request or an unreadable
   # page becomes an "error de fuente" row and the run continues (spec §6.7).
+  # Any other error ends the part as "error interno" (final review, Important 1).
   class ItemProcessor
     INTERCHANGES = YAML.load_file(Rails.root.join("config/catalog/interchanges.yml")).freeze
     def self.call(item) = new(item).call
@@ -35,9 +36,22 @@ module Catalog
       final = normalized.with(validations: @validations + normalized.validations + reconciled)
       @item.update!(status: @status, product: final.product, result: final.to_h)
       final
+    rescue StandardError => e
+      internal_error(e)
     end
 
     private
+
+    # An error outside the adapters (damaged reference data, a bug) ends this
+    # part with "error interno"; the other parts and the workbook go on.
+    def internal_error(error)
+      Rails.logger.error("ItemProcessor #{@item.part_number}: #{error.class.name}: #{error.message}")
+      validation = Records::Validation.new(field: "Proceso", erp_value: nil, source_value: "#{error.class.name}: #{error.message}",
+                                           url: nil, status: "error interno")
+      final = Records::ItemResult.new(product: nil, applications: [], interchanges: [], attributes: [], validations: [ validation ])
+      @item.update!(status: "error", product: nil, result: final.to_h)
+      final
+    end
 
     # D19/D20: markets are decided on normalized names (makes, models), so the
     # resolver runs after the Normalizer and before reconciling hints.

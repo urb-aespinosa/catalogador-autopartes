@@ -160,6 +160,22 @@ class Catalog::ItemProcessorTest < ActiveSupport::TestCase
     assert_includes r.validations.map { [ _1.field, _1.erp_value, _1.status ] }, [ "Intercambio", "DM-152", "no encontrado" ]
   end
 
+  # Final review, Important 1: an error outside the adapters (bad reference
+  # data, a bug) must end the part, never leave it "fetching" forever.
+  test "an unexpected error after the source ends the part with error interno" do
+    raising = Class.new { def self.call(*) = raise(KeyError, "key not found: \"models\"") }
+    item = source_item(manufacturer: "ELGIN", part_number: "HL-7025S", item_group: "PUNTERIAS", unit: "PZA",
+                       description: "HL7011 CHEVROLET 6.0L V8 07/20")
+
+    r = process(item, market_resolver: raising)
+
+    assert_equal "error", item.reload.status
+    assert_empty r.applications
+    assert_equal [ [ "Proceso", "KeyError: key not found: \"models\"", "error interno" ] ],
+                 r.validations.map { [ _1.field, _1.source_value, _1.status ] }
+    assert_equal r.to_h.deep_stringify_keys, item.result
+  end
+
   test "pipeline runs every item of a workbook synchronously" do
     run = Catalog::Pipeline.run(file_fixture("data_prueba_tecnica.xlsx"))
 

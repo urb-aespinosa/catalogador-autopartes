@@ -9,11 +9,18 @@ module Catalog
   # - D20: a name vPIC lists in no year (vpic_unknown) enters only as MEX
   #   level a; its years without sales stay "Modelo-año · no encontrado".
   #
-  # USA keeps level b for USA catalogs until EPA is wired in (Task 5).
+  # - USA level a, "confirmado por EPA": EPA lists the model that year and,
+  #   when the application has an engine, a configuration with that engine
+  #   (liters to one decimal and cylinders).
+  # - Engine refuted by EPA (D19, D22: only where EPA's coverage is complete):
+  #   USA catalog → the application is removed in every market; MEX catalog →
+  #   MEX stays and there is no USA row. Either way Validación "Motor · difiere".
   class MarketResolver
     INEGI_ORIGIN = "mercado MEX: ventas INEGI RAIAVL".freeze
+    EPA_ORIGIN = "mercado USA: EPA fueleconomy.gov".freeze
     CATALOG_ORIGIN = "mercado según catálogo".freeze
     SALES = "confirmado por ventas".freeze
+    EPA = "confirmado por EPA".freeze
     CATALOG = "según catálogo".freeze
 
     def self.call(applications, inegi: InegiSales.default, epa: Epa.default) = new(inegi, epa).call(applications)
@@ -27,8 +34,9 @@ module Catalog
     def call(applications)
       @levels = Hash.new { |h, k| h[k] = [] }
       @missing = Hash.new { |h, k| h[k] = [] }
+      @engine_validations = []
       rows = applications.uniq.flat_map { resolve(_1) }
-      [ rows.uniq, market_validations + missing_validations ]
+      [ rows.uniq, market_validations + missing_validations + @engine_validations ]
     end
 
     private
@@ -39,10 +47,51 @@ module Catalog
       sales = @inegi.sales(make: app.manufacturer, model: app.model, year: app.year)
       return unknown_name(app, sales) if app.vpic_unknown
 
+      configs = @epa&.configurations(make: app.manufacturer, model: app.model, year: app.year)
+      matches = configs && engine_matches(app, configs)
+      if matches&.empty?
+        record_engine_mismatch(app, configs)
+        return refuted(app, sales) if refutes?(app)
+
+        matches = configs = nil # D22 confirm_only: the mismatch neither confirms nor removes
+      end
+
       rows = []
       rows << mex_row(app, sales) if sales.any? || app.market == "MEX"
-      rows << catalog_row(app, "USA") if app.market == "USA"
+      rows << usa_row(app, configs, matches) if configs || app.market == "USA"
       rows
+    end
+
+    # USA catalog: the source's own engine is wrong, so no market keeps it.
+    # MEX catalog: EPA only speaks for the USA market.
+    def refuted(app, sales) = app.market == "USA" ? [] : [ mex_row(app, sales) ]
+
+    # nil when the application has no engine to compare (EPA presence is enough).
+    def engine_matches(app, configs)
+      return nil if app.liters.blank? || app.cylinders.blank?
+
+      configs.select { _1.displ.round(1) == app.liters.to_f.round(1) && _1.cylinders == app.cylinders.to_i }
+    end
+
+    def refutes?(app)
+      @epa.refutes?(make: app.manufacturer, model: app.model, year: app.year, liters: app.liters, cylinders: app.cylinders)
+    end
+
+    def usa_row(app, configs, matches)
+      return catalog_row(app, "USA") unless configs
+
+      record(app, "USA", EPA)
+      url = @epa.evidence_url(make: app.manufacturer, year: app.year, configurations: matches.presence || configs)
+      app.with(market: "USA", vpic_unknown: nil, evidence_urls: app.evidence_urls.to_a + [ [ EPA_ORIGIN, url ] ])
+    end
+
+    def record_engine_mismatch(app, configs)
+      epa_engines = configs.map { "#{_1.displ}L #{_1.cylinders} cil" }.uniq.join(", ")
+      url = @epa.evidence_url(make: app.manufacturer, year: app.year, configurations: configs)
+      @engine_validations << Records::Validation.new(
+        field: "Motor", erp_value: nil, url: app.url, status: "difiere",
+        source_value: "#{app.manufacturer} #{app.model} #{app.year} #{app.liters}L #{app.cylinders} cil · EPA: #{epa_engines} · #{url}"
+      )
     end
 
     def unknown_name(app, sales)

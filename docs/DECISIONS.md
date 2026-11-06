@@ -581,3 +581,30 @@ Pero dos tipos de casos borraban filas correctas:
   - El resolvedor corre después del `Normalizer` y antes del `Reconciler`.
   - Validación registra también el nivel b de USA, porque el spec dice que Validación registra el nivel usado.
   - En esta tarea, el combustible de la fila MEX es el de la aplicación; la regla por mercado llega en la Tarea 6.
+
+## 2026-11-06 13:15 — Hallazgo (adenda, Tarea 5): mercado USA y verificación de motor con EPA en la corrida real
+
+- **Corrida:** `tmp/run4.xlsx`, hecha desde la caché. Había 404 snapshots antes y 404 después, así que no hubo ninguna solicitud nueva.
+- **Aplicaciones:** 1,500 en `run4` contra 1,733 en `run3`.
+
+  | Pieza | MEX | USA |
+  |---|---|---|
+  | FSX-5840301 (Fraco, catálogo MEX) | 31 | **14** (nuevas, nivel a) |
+  | HL-7025S (Elgin, catálogo USA) | 448 (antes 526) | 961 (antes 1,130) |
+  | RM-152 (Rexite, catálogo MEX) | 2 | — |
+  | SP26-329R/L+20 (Safety, catálogo USA) | 20 | 24 |
+- **Validación de Mercado** (filas agrupadas):
+  - MEX "confirmado por ventas": 27.
+  - MEX "según catálogo": 8.
+  - USA "confirmado por EPA": 46.
+  - USA "según catálogo": 27.
+- **Nombre del nivel a en USA:** se llama "confirmado por EPA", no "confirmado por ventas", porque EPA no publica ventas. Confirma que el vehículo se ofreció en USA con ese motor.
+- **Motor · difiere:** 237 filas en Validación, las mismas que dio el reporte previo de D22.
+  - **169 eliminadas.** En catálogo USA, la aplicación sale de todos los mercados. Por eso HL-7025S pierde 169 filas USA y 78 filas MEX.
+    - Ejemplos: Buick Allure 2005–2007 5.3L (EPA: 3.6L y 3.8L V6), Buick LaCrosse 2005–2006 5.3L.
+  - **68 conservadas,** por `confirm_only` o por una excepción revisada.
+    - Ejemplos: Express 2500 6.0L 2007–2008 (EPA solo lista "Express 1500/2500 2WD" con 5.3L), CTS 6.2L 2009.
+- **Casos de control:**
+  - **Allure 2005 5.3L** ya no aparece.
+  - **Silverado 1500 2019 6.2L** se conserva en MEX y en USA.
+- **Fraco ahora tiene filas USA:** las aplicaciones Nissan de Fraco (catálogo MEX) ganan 14 filas USA de nivel a. EPA lista "Truck 2WD/4WD" con el mismo motor 2.4L de 4 cilindros esos años. Es la regla de D19: el otro mercado entra solo con nivel a.

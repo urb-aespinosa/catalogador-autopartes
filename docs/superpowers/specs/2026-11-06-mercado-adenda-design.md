@@ -153,4 +153,21 @@ Para cada aplicación con año modelo se evalúa **cada mercado por separado**:
 ## 9. A criterio del constructor
 - Nombres de clases y la forma interna de las tablas YAML.
 - Cómo se cachean o indexan en memoria el extracto de INEGI y los datos de EPA.
+
+## 10. Cómo quedó implementado (diferencias con este documento)
+Decisiones tomadas al implementar. Cada una está en `docs/DECISIONS.md` con su razonamiento.
+- **§5, orden:** el cálculo de mercados va **después** de normalizar, no antes. Las tablas usan nombres ya normalizados ("Chevrolet").
+- **§4.4, equivalencias INEGI (D20):** la capacidad nunca se infiere.
+  - Nombre genérico → todas las series de la línea.
+  - Nombre con capacidad → solo las series que la dicen.
+  - Nombre mexicano de Elgin → la serie con el mismo nombre.
+- **§3.3 y §4.1, nombres que vPIC no conoce en ningún año (D20):** entran solo como MEX nivel a, en los años con ventas INEGI.
+- **§4.4, equivalencias EPA (D21):** son inclusivas. "1500" es toda la línea ligera de EPA, porque una equivalencia faltante borraría filas correctas.
+- **§4.2, refutación (D22):** EPA solo refuta un motor donde su cobertura de esa línea es completa.
+  - `confirm_only` (nombres 2500/3500/HD y genéricos de líneas con HD, acotados por años donde aplica) solo confirma.
+  - Lo mismo las excepciones revisadas por modelo · año · motor.
+  - En esos casos la fila se conserva y Validación registra `difiere`.
+  - El texto de "Motor · difiere" termina con el resultado: `eliminada`, `se conserva solo MEX`, `se conserva (confirm_only)` o `se conserva (excepción revisada)`.
+- **§4.5, estados:** el nivel a de USA se llama `confirmado por EPA`, no `confirmado por ventas`, porque EPA no publica ventas. Validación también registra el nivel b de USA.
+- **§4.3, combustible:** un combustible de EPA sin entrada en `fuels.yml` (híbridos, bifuel, eléctricos) no se adivina. Queda vacío y se registra `sin traducción`.
 - La redacción exacta de los textos de Validación y Fuentes, siempre que incluya nivel, fuente y URL.

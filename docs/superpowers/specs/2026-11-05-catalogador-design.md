@@ -125,6 +125,14 @@ El evaluador califica sobre todo el *approach*, las decisiones y el tiempo. Tien
   - `Validación`, como `no encontrado`.
 
 ### 4.3 Mercado y Submodelo — D3 **[decisión del desarrollador]**
+> **Reemplazado por la adenda D19** (`docs/superpowers/specs/2026-11-06-mercado-adenda-design.md`, con D20–D22 en `docs/DECISIONS.md`).
+> - `Mercado` ya no es solo el mercado del catálogo, sino el resultado de la evidencia, con una fila por mercado:
+>   - MEX nivel a por ventas INEGI;
+>   - USA nivel a por EPA;
+>   - nivel b, "según catálogo", solo para el mercado del propio catálogo.
+> - El `MARKET` de cada adaptador sigue existiendo, ahora como **mercado del catálogo** (nivel b).
+> - La regla de Submodelo no cambia: vacío si la fuente no lo trae (adenda §7).
+
 - `Mercado` lo declara cada adaptador según el mercado de su fuente:
   - Elgin, Safety, Melling y Cloyes → `USA`.
   - Fraco y Rexite → `MEX`.
@@ -291,6 +299,10 @@ Todas las URLs y respuestas se observaron el 2026-11-05. Las copias del spike es
   - La URL de vPIC que confirma cada combinación se agrega en Fuentes con el origen `verificación NHTSA vPIC` **[criterio de diseño]**.
 - **Comparación de nombres de modelo:** se normalizan mayúsculas, espacios y guiones **[criterio de diseño]**.
   - Los nombres que vPIC no reconoce no se generan; van a Validación. Por ejemplo `Express Pasajeros` (nombre del mercado mexicano) o variantes como `Silverado 1500 HD Classic`.
+    > **Reemplazado en parte por la adenda D19 y por D20:**
+    > - Si vPIC no reconoce el nombre en **ningún** año (`GetModelsForMake`), la aplicación ya no se descarta. Entra **solo como MEX nivel a**, en los años con ventas INEGI. Es el caso de Cheyenne, Sonora, Express Pasajeros y Express Cargo.
+    > - Si vPIC conoce el modelo pero no confirmó ese año, sigue como `no encontrado`.
+    > - El motor ya no lo afirma solo la fuente: en EE. UU. lo verifica EPA (adenda §4.2, D21, D22).
   - Si esto deja fuera muchas aplicaciones reales, se registra como hallazgo en `DECISIONS.md`.
   - No se agregan alias inventados. Cualquier tabla de alias de modelos se revisa con el desarrollador.
 

@@ -27,6 +27,7 @@ El catálogo generado con los datos de la prueba está en `docs/output/catalogo_
   - macOS: `brew install poppler`
   - Debian/Ubuntu: `sudo apt install poppler-utils`
   - El `Dockerfile` ya lo instala.
+  - El Excel entregado se generó con **poppler 26.08.0** (`pdftotext -v`). Fraco se lee por la posición del texto en el PDF, así que otra versión de poppler podría cambiar el resultado; para reproducirlo idéntico, usa la misma versión.
 
 ## Instalación y uso
 
@@ -60,7 +61,7 @@ FORCE_REFRESH=1 bin/rails "catalog:run[entrada.xlsx,salida.xlsx]"
 bin/rails catalog:snapshots:dump   # guarda las copias nuevas en db/snapshots/
 ```
 
-Una descarga nueva es otro snapshot y puede cambiar el resultado, porque los sitios cambian. Todas las solicitudes se identifican con el User-Agent del proyecto, `catalogador-autopartes/1.0 (prueba tecnica)`, y hacen como máximo una solicitud por segundo por sitio.
+Una descarga nueva es otro snapshot y puede cambiar el resultado, porque los sitios cambian. Con `FORCE_REFRESH=1`, cada URL se vuelve a descargar una sola vez por proceso, aunque la corrida la consulte muchas veces. Todas las solicitudes se identifican con el User-Agent del proyecto, `catalogador-autopartes/1.0 (prueba tecnica)`, y hacen como máximo una solicitud por segundo por sitio.
 
 ### Pruebas
 
@@ -90,6 +91,7 @@ En la app, cada pieza se procesa en su propio job, y un job final arma el libro.
   - `confirmado por ventas`, `confirmado por EPA` y `según catálogo` (nivel de mercado);
   - `sin traducción`: un término que no está en el diccionario sale con su texto original;
   - `error de fuente`: la fuente no respondió o cambió de formato;
+  - `error interno`: falló algo fuera de la fuente (por ejemplo, un archivo de referencia dañado). Esa pieza sale sin datos y con el error en Validación; las demás piezas y el Excel se generan igual;
   - `sin fuente configurada`: la marca no tiene adaptador, así que no se buscó nada.
 
 ## Rol de cada fuente
@@ -193,6 +195,10 @@ Los fabricantes casi nunca publican equivalencias con otras marcas, así que la 
 - **JC-20 (TF Victor):** su ficha oficial cubre 1989–1998 y la pieza llega a 1999. No se confirma.
 - **QJC20G (Quebec) y 83-301 (Moresa):** no se encontraron en catálogos oficiales públicos. Los sitios de Moresa y TF Victor no respondieron a nuestro User-Agent; eso se registró como hallazgo, no se esquivó.
 
+## Por qué la hoja Atributos tiene 10 filas (el ejemplo tiene 74)
+
+Atributos solo lleva lo que la fuente oficial de cada pieza publica: Elgin da 5 atributos de HL-7025S, Fraco 4 de FSX-5840301, Safety solo la sobremedida de SP26-329R/L+20, que sale del número de parte (D10), y Rexite ninguno. Los atributos que faltan no se completan con datos de otras piezas ni de sus intercambios (D11): un atributo de otra pieza no está comprobado para esta.
+
 ## Fabricantes soportados y cómo agregar uno
 
 Los adaptadores están registrados en `Sources::Registry` (D18):
@@ -251,7 +257,7 @@ Los adaptadores están registrados en `Sources::Registry` (D18):
 
 ### Otras limitaciones conocidas del mercado (revisión independiente, D22)
 
-- **Errores de datos de referencia.** Si el extracto de INEGI o de EPA, o sus YAML, están dañados, el error detiene la pieza en lugar de registrarse como "error de fuente". Los archivos están versionados y tienen tests que los regeneran.
+- **Errores de datos de referencia.** Si el extracto de INEGI o de EPA, o sus YAML, están dañados, la pieza termina como `error interno` y sale sin datos, aunque su fuente oficial sí haya respondido. Las demás piezas y el Excel se generan igual. Los archivos están versionados y tienen tests que los regeneran.
 - **Lista de modelos de vPIC.** Si falla la consulta `GetModelsForMake` (D20), la pieza completa queda como "error de fuente". Las respuestas usadas están en caché y en los fixtures.
 - **Aplicaciones sin año.** Conservan el mercado de su catálogo, pero sin evidencia de mercado en Fuentes ni fila de Mercado en Validación.
 - **Una URL por grupo en Validación de Mercado.** Cada grupo muestra una sola URL; la hoja Fuentes conserva todas.

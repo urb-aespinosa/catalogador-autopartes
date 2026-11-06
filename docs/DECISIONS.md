@@ -684,3 +684,23 @@ Pero dos tipos de casos borraban filas correctas:
 - **README:** completo, revisado por el desarrollador. Incluye el principio "toda la información es comprobable", Validación como diagnóstico de los datos de origen, la visión para producción (VCdb, ACES/PIES, adaptadores por proveedor) y la sección "Proceso", con el uso de IA.
 - **Intercambios vacía:** ningún número del ERP tiene confirmación oficial dentro de las fuentes que consulta la app. FS-001225 se confirmó en la investigación, pero el adaptador DC/Dacomsa se recortó (D19, prioridad 3) y queda pendiente.
 - **CI (D17):** `poppler-utils` en el job `test` y en el `Dockerfile`; se quitaron el job `system-test` y `.github/dependabot.yml`. PR #5 (`feature/catalog-pipeline` → `master`): `lint`, `scan_js`, `scan_ruby` y `test` en verde. La causa `db/schema.rb doesn't exist yet` desapareció, como se esperaba.
+
+## 2026-11-06 16:07 — Revisión final de la rama y correcciones
+
+**Revisor independiente** (contexto nuevo, solo lectura, sobre `dd9f156..0a18287`): "listo con correcciones", sin hallazgos críticos. El desarrollador aprobó la clasificación y subió dos menores a importantes.
+
+**Corregido, cada uno con su test fallando primero:**
+1. **Un error inesperado en una pieza colgaba la corrida web.** Un error fuera de los adaptadores (un YAML dañado, un bug) dejaba la pieza en "consultando fuente" y el Excel nunca se armaba. Ahora la pieza termina con estado `error`, sin datos, y Validación registra `Proceso · error interno` con el error. Las demás piezas y el Excel siguen.
+2. **`FORCE_REFRESH=1` descargaba la misma URL muchas veces.** vPIC habría recibido unas 1,000 solicitudes repetidas. Ahora cada URL se descarga como máximo una vez por proceso.
+3. **Una hoja Origen sin piezas dejaba la pantalla en "Procesando…".** Ahora se rechaza: "La hoja Origen no tiene piezas."
+4. **Origen perdía el tipo de las celdas.** Un código de texto como `"00451"` salía como el número 451. Ahora se guarda cada celda tal como se leyó (columna nueva `source_items.origin_values`): un número sigue siendo número y un texto sigue siendo texto, con sus ceros.
+
+**Menores incluidos a pedido del desarrollador:**
+- Test de que un dato que empieza con "=" sale como texto. Pasó desde el principio, porque caxlsx ya lo protege por defecto; el test impide que esa protección se desactive sin que nadie lo note.
+- El README registra la versión de poppler usada (26.08.0).
+
+**Comprobado sin cambios:** subir un `.docx` (un zip que no es Excel) ya daba el mensaje "no es un Excel válido". El test se queda.
+
+**Se quedan como están** (app local de prueba, sin efecto en el contenido): sin autenticación, sin límite de tamaño de archivo, `snapshots:load` sin comparar sha256, redirecciones como "error de fuente", `||=` entre hilos, y D20.
+
+**Resultado:** 233 pruebas en verde y rubocop limpio. El Excel de entrega, regenerado, es idéntico en las 8 hojas.

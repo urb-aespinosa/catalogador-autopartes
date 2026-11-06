@@ -1110,5 +1110,6 @@ end
 - [ ] **Step 5: CI de GitHub Actions en verde** (`.github/workflows/ci.yml`):
   - Agregar `poppler-utils` al `apt-get install` del job `test`. Los tests de Fraco llaman a `pdftotext`.
   - Causa de `test` y `system-test` en master: `db/schema.rb doesn't exist yet`. En master no hay migraciones (solo el esqueleto). En la rama `schema.rb` ya existe, así que esa causa desaparece al integrar. Verificarlo en el PR, no suponerlo.
-  - `system-test`: la rama no tiene `test/system/`, y `bin/rails test:system` falla con `LoadError ... test/system`. Opciones: quitar el job (no hay pruebas de sistema; la UI se prueba con tests de integración) o agregar una prueba de sistema mínima. Decidir y registrar en `docs/DECISIONS.md`.
+  - Quitar el job `system-test` (D17). La rama no tiene `test/system/`. La actualización en vivo se verifica a mano en el Step 4, con captura o GIF en el README.
+  - Desactivar dependabot: borrar `.github/dependabot.yml` (D17).
   - Comprobarlo abriendo un pull request de `feature/catalog-pipeline` hacia `master` y esperar todos los jobs en verde.

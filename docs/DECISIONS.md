@@ -7,6 +7,7 @@ Formato: fecha y hora (CDMX) · decisión · por qué · consecuencias.
 | Sesión | Fecha | Inicio | Fin | Horas | Qué se hizo |
 |---|---|---|---|---|---|
 | 1 | 2026-11-05 | 11:07 | 18:12 | 7.1 | Esqueleto Rails, brief, CLAUDE.md, spike de fuentes, brainstorming, decisiones D1–D16, spec aprobado, plan, Tareas 1–15 (pipeline completo, 3 revisiones independientes, UI con progreso en vivo, primera corrida real y doble corrida idéntica) |
+| 2 | 2026-11-06 | 08:19 | (en curso) | | Diagnóstico del CI de GitHub Actions, D17, cierre de PRs de dependabot, Tarea 15b |
 
 ---
 
@@ -329,3 +330,17 @@ Dos time-boxes de desarrollo de 30 minutos (D11, punto 3). Usé unos 15 minutos 
 - Quebec / TF Victor (QJC20G, JC20);
 - Moresa (83-301);
 - Elgin (HL7011).
+
+## 2026-11-06 08:34 — D17. CI de GitHub Actions, dependabot y push por tarea
+
+**Contexto:** el CI falla en master en los jobs `test` y `system-test` con `db/schema.rb doesn't exist yet`, porque master solo tiene el esqueleto, sin migraciones. En la rama hay un segundo problema: no existe `test/system/`, y `bin/rails test:system` falla con `LoadError`.
+
+**Decisión**
+- **Se quita el job `system-test`** del workflow.
+- El desarrollador verifica a mano en el navegador la actualización en vivo de la pantalla durante la sesión de verificación. La evidencia (captura o GIF) va en el README.
+- **Se desactiva dependabot** en la Tarea 16. Sus 4 PRs (#1–#4) se cerraron con el comentario "Fuera del alcance de la prueba técnica."
+- El job `test` instala `poppler-utils`, porque los tests de Fraco usan `pdftotext`.
+- Se comprueba con un PR de `feature/catalog-pipeline` hacia `master`, con todos los jobs en verde.
+- **Push a GitHub después de cada tarea terminada.**
+
+**Por qué:** una prueba de navegador con jobs y Turbo Streams es frágil en CI y aporta poco frente a los tests de integración que ya existen.

@@ -714,3 +714,20 @@ Pero dos tipos de casos borraban filas correctas:
    - **Tipos:** en cada columna, número o texto como en el ejemplo. Las únicas diferencias son del ejemplo, que mezcla tipos en una misma columna: algunos Modelo como número y algunos CC/CID como texto. Nuestro Excel usa un solo tipo por columna.
 5. **Doble corrida en el clon:** dos corridas seguidas dan contenido idéntico entre sí y con `docs/output/catalogo_bonaparte.xlsx`, en las 8 hojas. Había 404 snapshots antes y 404 después: ninguna solicitud de red.
    - **Prueba nueva** `test/integration/delivered_catalog_test.rb`: regenera el Excel de entrega desde `db/snapshots` y lo compara hoja por hoja. Primero falló sin cargar los snapshots (la app intentó ir a la red y WebMock lo bloqueó); con ellos pasa. Así, los conteos del README quedan cubiertos por una prueba.
+
+## 2026-11-06 16:42 — Hallazgo (verificación manual): la pantalla perdía actualizaciones en vivo
+
+**Qué vio el desarrollador:** en la segunda corrida desde el navegador (corrida 16), RM-152 se quedó en "consultando fuente". Al recargar, la pantalla mostró "listo": la base de datos estaba bien y lo que se perdió fue el aviso en vivo.
+
+**Causa, confirmada en `log/development.log`:**
+- La página se dibujó (`GET /runs/16`) con el estado de ese momento.
+- Después se transmitieron RM-152 "consultando fuente" y RM-152 "listo".
+- Recién entonces el navegador se suscribió (`Turbo::StreamsChannel is streaming from …`).
+- Como todo salía de la caché, RM-152 terminó en milisegundos, antes de la suscripción. Action Cable no guarda los mensajes para quien se suscribe después, así que el aviso de "listo" se perdió. Las piezas que terminaron más tarde sí llegaron.
+
+**Corrección:** la pantalla siempre termina mostrando el estado real, sin recargar.
+1. **Al suscribirse, la página se pone al día.** Turbo marca el elemento de suscripción con el atributo `connected` cuando el servidor la confirma, también después de una reconexión. Un controlador Stimulus (`catch_up_controller.js`) espera esa señal, pide `/runs/:id.turbo_stream` y reemplaza todo el bloque de progreso con el estado actual.
+2. **El aviso final reemplaza el bloque completo:** la tabla con el estado final de cada pieza y el botón de descarga. Antes reemplazaba solo el botón.
+3. **Protección contra una respuesta atrasada:** si el aviso final llega mientras la consulta de ponerse al día sigue en camino, la respuesta de esa consulta se descarta, para no reemplazar el estado final con uno más viejo.
+
+**Tests:** el job final transmite el bloque completo, con cada pieza y la descarga; la página declara el controlador con su URL; el formato `turbo_stream` devuelve el progreso actual. El JavaScript no tiene test automático, porque no hay pruebas de navegador (D17). Se verifica repitiendo la prueba desde el navegador.

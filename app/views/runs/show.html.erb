@@ -1,21 +1,11 @@
 <% content_for :title, "Corrida #{@run.id}" %>
-<%= turbo_stream_from @run %>
+<%# Broadcasts sent before the subscription is confirmed are lost, so once it
+    is confirmed the page asks for the current state (catch-up controller). %>
+<%= turbo_stream_from @run, data: { controller: "catch-up", catch_up_url_value: run_path(@run, format: :turbo_stream) } %>
 
 <main class="page">
   <h1>Corrida <%= @run.id %></h1>
   <p>Cada pieza se actualiza sola mientras se consulta su fuente oficial.</p>
 
-  <table class="items">
-    <thead>
-      <tr>
-        <th>Referencia</th><th>Fabricante</th><th>Estado</th>
-        <th>Aplicaciones</th><th>Intercambios</th><th>Atributos</th>
-      </tr>
-    </thead>
-    <tbody>
-      <%= render partial: "runs/item", collection: @run.source_items, as: :item %>
-    </tbody>
-  </table>
-
-  <%= render "runs/download", run: @run %>
+  <%= render "runs/progress", run: @run %>
 </main>

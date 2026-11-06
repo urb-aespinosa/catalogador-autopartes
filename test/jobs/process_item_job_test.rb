@@ -60,4 +60,22 @@ class ProcessItemJobTest < ActiveJob::TestCase
     assert run.output.attached?
     assert_equal "catalogo_bonaparte.xlsx", run.output.filename.to_s
   end
+
+  # Manual verification finding: an item broadcast sent before the browser
+  # subscribed was lost. The final broadcast replaces the whole progress
+  # block, so the page always ends with every item's real state.
+  test "finalize replaces the whole progress block with every item and the download" do
+    run = Catalog::Pipeline.run(file_fixture("data_prueba_tecnica.xlsx"))
+    run.update!(status: "finalizing")
+
+    streams = capture_turbo_stream_broadcasts(run) { FinalizeRunJob.perform_now(run) }
+
+    progress = streams.find { _1["target"] == "progress" }
+    assert progress, "no broadcast replaces #progress"
+    assert_equal "replace", progress["action"]
+    html = progress.at("template").inner_html
+    assert_includes html, 'data-status="done"'
+    run.source_items.each { assert_includes html, %(id="source_item_#{_1.id}" class="status-#{_1.status}") }
+    assert_includes html, "Descargar Excel"
+  end
 end

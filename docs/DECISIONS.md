@@ -456,3 +456,37 @@ Todas las consultas automáticas usaron el User-Agent del proyecto y una solicit
 - **Columnas por nombre:** se eligen por su nombre, no por su posición, porque el orden de las 84 columnas de EPA no está garantizado. Si falta alguna, falla con `FormatError` y no escribe nada.
 - **Celdas vacías:** una celda vacía entre comillas (`""`) y una sin comillas se escriben igual, como vacío.
 - **Plan B no necesario:** con el archivo masivo no hace falta consultar la API de EPA modelo por modelo.
+
+## 2026-11-06 12:20 — D20. Equivalencias INEGI sin inferir capacidad, y nombres mexicanos que vPIC no conoce
+
+**Contexto:** al revisar `config/catalog/inegi_models.yml` (Tarea 2 de la adenda) aparecieron dos problemas.
+- **Capacidad:** nuestros catálogos dicen la capacidad ("Silverado 1500", "Sierra 2500 HD") y muchas series de INEGI no ("Sierra Cabina Regular", "Chevrolet Express Cargo Van").
+- **Nombres mexicanos:** Elgin lista nombres mexicanos (Cheyenne, Sonora, Express Pasajeros, Express Cargo). Hoy se descartan porque vPIC no los conoce, aunque INEGI registra ventas con esos mismos nombres.
+
+**Decisión 1. Equivalencias de nombres: la capacidad nunca se infiere.** La regla queda escrita también en el encabezado del YAML.
+- **Nombre genérico** de nuestro catálogo, sin capacidad (por ejemplo "Silverado" de Safety): cuenta con todas las series de esa línea en INEGI, incluidas las que INEGI renombró en 2019 ("Silverado Cabina Regular/Doble Cabina", "Sierra Cabina Regular/Doble Cabina").
+- **Nombre con capacidad** ("Silverado 1500", "Silverado 2500 HD"): cuenta solo con las series de INEGI que dicen esa misma capacidad. Si ninguna la dice, no hay equivalencia; nunca se toma la serie genérica.
+  - Sin equivalencia, el modelo no tiene evidencia de ventas en México. Eso no significa "no vendido": si el catálogo es MEX, conserva MEX con nivel b.
+  - El alias de capacidad de vPIC (D14) sirve solo para consultar vPIC; no da cobertura en INEGI.
+- **Nombre mexicano** que lista Elgin: cuenta con la serie de INEGI que tiene ese mismo nombre.
+  - Cheyenne → "Cheyenne Cabina Regular/Doble Cabina" (2019+).
+  - Sonora → "Sonora Suv".
+  - Express Pasajeros → "Chevrolet Express Passenger Van".
+  - Express Cargo → "Chevrolet Express Cargo Van".
+  - Cheyenne no se mapea a "Silverado 1500", ni al revés. Cheyenne Nueva y Sierra Nueva no tienen serie con ese nombre en INEGI, así que quedan fuera.
+
+**Decisión 2. Nombres que vPIC no reconoce en ningún año: entran solo como MEX nivel a.**
+- **Cuándo aplica:** solo cuando el nombre del modelo no aparece en ningún año de la lista de modelos de vPIC para esa armadora (`GetModelsForMake`, ya en caché para Chevrolet y GMC). Es el caso de Cheyenne, Sonora, Express Pasajeros y Express Cargo.
+- **Qué se hace:** la aplicación entra únicamente como **MEX nivel a**, y solo en los años calendario con ventas en INEGI. Nunca sale una fila USA para estos nombres.
+  - Resultado esperado: Cheyenne 2019–2024, Sonora 2005–2007, Express Pasajeros 2005–2020, Express Cargo 2005–2025.
+  - Los años sin ventas siguen en Validación como "no encontrado".
+- **Cuándo no aplica:** si vPIC conoce el modelo pero no confirmó ese año (Colorado 2013–2014, CTS 2020–2021, Avalanche 2014+, Camaro 2009), esa negativa se respeta y el año sigue como "no encontrado". INEGI no puede rescatarlo.
+- **Por qué:** INEGI cuenta ventas por año calendario y no dice qué versión ni qué motor se vendió. Elgin publica rangos de años más amplios que la vida real de cada motor.
+  - Ejemplo: la Colorado con V8 5.3L se vendió de 2009 a 2012 y Elgin la extiende a 2013–2014.
+  - INEGI tiene ventas de Colorado en 2013 y 2014, pero de otras versiones. Si esas ventas confirmaran el año, aparecería una aplicación que nunca existió.
+  - Cuando vPIC conoce el modelo, su negativa sobre el año es la evidencia más específica que tenemos. Cuando no conoce el nombre, no dice nada, y entonces INEGI es la única fuente oficial disponible.
+
+**Ajuste al plan de la adenda (Tarea 4):**
+- `Vpic.expand` deja de descartar las aplicaciones cuyo nombre vPIC no reconoce en ningún año. Las devuelve aparte, sin emitir su validación de "Modelo-año".
+- Esas aplicaciones pasan por el `Normalizer` como las demás.
+- `MarketResolver` les aplica la decisión 2: fila MEX nivel a en los años con ventas, con la evidencia INEGI en Fuentes, y "Modelo-año · no encontrado" en Validación para el resto de los años, con el mismo texto que hoy.

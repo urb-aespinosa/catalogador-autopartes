@@ -1,0 +1,138 @@
+# Equivalences (D19, D20): our (make, model) → INEGI RAIAVL (MARCA, MODELO).
+# Reviewed by the developer before commit. A model that is not here has no
+# MEX sales evidence, which never means "not sold".
+#
+# Rule (D20), capacity is never inferred:
+# - Generic name in our catalog (no capacity, e.g. Safety's "Silverado")
+#   → every INEGI series of that line, including the ones renamed in 2019
+#   ("Silverado Cabina Regular/Doble Cabina", "Sierra Cabina Regular/...").
+# - Name with capacity ("Silverado 1500", "Silverado 2500 HD") → only the
+#   INEGI series that state that same capacity; none → no entry.
+# - Mexican names listed by Elgin ("Cheyenne", "Sonora", "Express
+#   Pasajeros") → the INEGI series with that same name. Cheyenne is not
+#   mapped to "Silverado 1500" (or the reverse).
+#
+# INEGI publishes some series twice, with and without a trailing "-"
+# (e.g. "Silverado 1500 Cabina Regular-"); both are listed on purpose.
+# INEGI starts in 2005, so models whose applications end before 2005
+# (all our Nissan ones, GMC Suburban 1999-2000) need no entry.
+#
+# Not in INEGI under any name (left out): Buick Allure, Buick Rainier,
+# Chevrolet Monte Carlo, GMC Savana, GMC Envoy, Isuzu Ascender, Saab 9-7X,
+# Pontiac G8, Pontiac GTO, Pontiac Grand Prix.
+
+Buick:
+  # "Lacrosse" (De Lujo, 2010-2017).
+  LaCrosse:
+    - { marca: General Motors, modelo: Lacrosse }
+
+Cadillac:
+  # Sedan and coupe body styles of the same model.
+  CTS:
+    - { marca: General Motors, modelo: Cts 4 Ptas }
+    - { marca: General Motors, modelo: Cts 2 Ptas }
+  # "Escalade EXT" (pickup) and "Escalade IQ/IQL" (electric) are other models.
+  Escalade:
+    - { marca: General Motors, modelo: Escalade Suv }
+  Escalade ESV:
+    - { marca: General Motors, modelo: Escalade ESV SUV AWD }
+
+Chevrolet:
+  Avalanche:
+    - { marca: General Motors, modelo: Avalanche UUV }
+  # Coupe and convertible of the same model.
+  Camaro:
+    - { marca: General Motors, modelo: Camaro }
+    - { marca: General Motors, modelo: Camaro Convertible }
+  # Cab styles of the same pickup.
+  Colorado:
+    - { marca: General Motors, modelo: Colorado Cabina Regular }
+    - { marca: General Motors, modelo: Colorado Doble Cabina }
+  # Coupe and convertible of the same model.
+  Corvette:
+    - { marca: General Motors, modelo: Corvette }
+    - { marca: General Motors, modelo: Corvette 2 Pts. Convertible }
+  # Body styles of the same van; INEGI gives no tonnage.
+  Express:
+    - { marca: General Motors, modelo: Chevrolet Express Cargo Van }
+    - { marca: General Motors, modelo: Chevrolet Express Cutaway }
+    - { marca: General Motors, modelo: Chevrolet Express MAX Cargo Van }
+    - { marca: General Motors, modelo: Chevrolet Express Passenger Van }
+  # Mexican name (D20). Elgin's "Express Pasajeros" / "Express Cargo" are
+  # the passenger and cargo vans INEGI names the same way.
+  Express Pasajeros:
+    - { marca: General Motors, modelo: Chevrolet Express Passenger Van }
+  Express Cargo:
+    - { marca: General Motors, modelo: Chevrolet Express Cargo Van }
+  # Mexican name (D20): INEGI series named "Cheyenne" (2019+). The 2005-2008
+  # "Silverado 2500 Cheyenne Crew Cab 4x4" is a 2500, so it is not here.
+  Cheyenne:
+    - { marca: General Motors, modelo: Cheyenne Cabina Regular }
+    - { marca: General Motors, modelo: Cheyenne Doble Cabina }
+  # Mexican name (D20).
+  Sonora:
+    - { marca: General Motors, modelo: Sonora Suv }
+  Impala:
+    - { marca: General Motors, modelo: Impala }
+  # Generic name (Safety, no capacity) → every Silverado series, including
+  # the 2019 renaming. Cheyenne series are a different name (D20).
+  Silverado:
+    - { marca: General Motors, modelo: Silverado 1500 Cabina Regular }
+    - { marca: General Motors, modelo: Silverado 1500 Cabina Regular- }
+    - { marca: General Motors, modelo: Silverado 2500 Cabina Extendida }
+    - { marca: General Motors, modelo: Silverado 2500 Cabina Regular }
+    - { marca: General Motors, modelo: Silverado 2500 Cabina Regular- }
+    - { marca: General Motors, modelo: Silverado 2500 Cheyenne Crew Cab 4x4 }
+    - { marca: General Motors, modelo: Silverado 2500 Doble Cabina }
+    - { marca: General Motors, modelo: Silverado 2500 Doble Cabina- }
+    - { marca: General Motors, modelo: Silverado 3500 Chassis Cab }
+    - { marca: General Motors, modelo: Silverado 3500 HD Chassis Cab Heavy Duty }
+    - { marca: General Motors, modelo: Silverado Cabina Regular }
+    - { marca: General Motors, modelo: Silverado Doble Cabina }
+  # Cab styles that carry the 1500 name.
+  Silverado 1500:
+    - { marca: General Motors, modelo: Silverado 1500 Cabina Regular }
+    - { marca: General Motors, modelo: Silverado 1500 Cabina Regular- }
+  # Cab styles that carry the 2500 name.
+  Silverado 2500:
+    - { marca: General Motors, modelo: Silverado 2500 Cabina Extendida }
+    - { marca: General Motors, modelo: Silverado 2500 Cabina Regular }
+    - { marca: General Motors, modelo: Silverado 2500 Cabina Regular- }
+    - { marca: General Motors, modelo: Silverado 2500 Cheyenne Crew Cab 4x4 }
+    - { marca: General Motors, modelo: Silverado 2500 Doble Cabina }
+    - { marca: General Motors, modelo: Silverado 2500 Doble Cabina- }
+  # The only INEGI series that says "3500" without "HD".
+  Silverado 3500:
+    - { marca: General Motors, modelo: Silverado 3500 Chassis Cab }
+  # The only INEGI series that carries "3500 HD".
+  Silverado 3500 HD:
+    - { marca: General Motors, modelo: Silverado 3500 HD Chassis Cab Heavy Duty }
+  Suburban:
+    - { marca: General Motors, modelo: Suburban Suv }
+    - { marca: General Motors, modelo: Suburban SUV- }
+  Tahoe:
+    - { marca: General Motors, modelo: Tahoe }
+  Trailblazer:
+    - { marca: General Motors, modelo: Trailblazer Suv }
+
+GMC:
+  Canyon:
+    - { marca: General Motors, modelo: Canyon }
+    - { marca: General Motors, modelo: Canyon Crew Cab 4x4 }
+  # INEGI names the GMC pickup "GMC Sierra ..." until 2019 and "Sierra ..."
+  # after; neither carries tonnage.
+  Sierra:
+    - { marca: General Motors, modelo: GMC Sierra Cabina Regular }
+    - { marca: General Motors, modelo: GMC Sierra Doble Cabina }
+    - { marca: General Motors, modelo: Sierra Cabina Regular }
+    - { marca: General Motors, modelo: Sierra Doble Cabina }
+  Yukon:
+    - { marca: General Motors, modelo: Yukon Suv }
+  Yukon XL:
+    - { marca: General Motors, modelo: Yukon XL }
+
+Hummer:
+  # SUV and SUT (pickup bed) body styles of the same H2.
+  H2:
+    - { marca: General Motors, modelo: H2 Suv }
+    - { marca: General Motors, modelo: H2 Sut }

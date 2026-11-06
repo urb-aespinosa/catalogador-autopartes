@@ -140,6 +140,14 @@
   - nivel b: origen `"mercado según catálogo"`, URL `app.url`.
 - Validación: `field: "Mercado"`, `erp_value: nil`, `source_value: "MEX · #{make} #{model} #{Vpic.year_ranges(years)}"`, `url: app.url`, `status: "confirmado por ventas"` o `"según catálogo"`. Una fila por pieza × armadora × modelo × mercado × nivel.
 - En esta tarea el lado USA conserva la regla actual: si el catálogo es USA, la fila USA sale como nivel b, sin consultar EPA. Task 5 lo reemplaza.
+- **Ajuste D20 (2026-11-06 12:20):** los nombres que vPIC no reconoce en ningún año (los que no aparecen en `GetModelsForMake` de esa armadora, ya en caché) dejan de descartarse.
+  - `Vpic.expand` los devuelve aparte, sin su validación de "Modelo-año".
+  - Pasan por el `Normalizer` como las demás aplicaciones.
+  - `MarketResolver` les da una fila **solo MEX nivel a** en los años con ventas INEGI, y Validación `"Modelo-año"` · `"no encontrado"` para los años restantes, con el mismo texto que hoy.
+  - Si vPIC conoce el modelo pero no confirmó el año, no cambia nada: sigue "no encontrado".
+  - Tests:
+    - `a name vPIC never lists is kept as MEX level a only in years with INEGI sales` (Sonora 2005–2008 → MEX 2005–2007, "no encontrado" 2008);
+    - `a model vPIC knows keeps its unconfirmed years as no encontrado` (Colorado 2013 con ventas INEGI → sin fila).
 
 - [ ] **Step 1: Tests que fallen** en `market_resolver_test.rb`. Usar un doble de `InegiSales` y `epa:` nulo:
   - `MEX catalog with INEGI sales gives one MEX row at level a`: evidencia `["mercado MEX: ventas INEGI RAIAVL", SOURCE_URL, "Pickup Largo · 2010 · 120 unidades"]`.

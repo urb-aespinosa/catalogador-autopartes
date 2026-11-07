@@ -420,6 +420,13 @@ Todas las consultas automáticas usaron el User-Agent del proyecto y una solicit
 
 **Contexto:** respuesta del evaluador: *"la idea es que encuentres la manera de conseguir, o generar, esa data… quiero evaluar qué estrategias eliges y cómo planteas la solución cuando hay mucha incertidumbre"*. El principio se mantiene: todo comprobable, nada inventado. Detalle completo en `docs/superpowers/specs/2026-11-06-mercado-adenda-design.md` (aprobada).
 
+**Por qué dónde se vendió:**
+- El mercado del catálogo (D3) describe la fuente, no el vehículo: la Silverado se vendió en los dos países, y la Cheyenne solo en México.
+- El origen de la marca no dice nada de un vehículo vendido solo en México.
+- El país de fabricación tampoco sirve: la NP300 se fabrica en México y también se exporta.
+- Para refacciones importa dónde circula el vehículo, porque ahí se busca la pieza. Por eso se usan registros oficiales de venta (INEGI, EPA) y, sin registro, el catálogo marcado como "según catálogo".
+- *Efecto, medido en la corrida de entrega:* las filas MEX pasaron de 33, todas por catálogo, a 472, con 439 confirmadas por ventas de INEGI.
+
 **Decisión**
 - **El mercado se define por dónde se vendió el vehículo**, por niveles y por mercado:
   - **Nivel a, confirmado por ventas.** MEX: ventas INEGI > 0 en el mismo año calendario que el año modelo (criterio estricto). USA: EPA lista ese modelo-año y, si la aplicación trae motor, tiene una configuración con motor coincidente.
@@ -441,7 +448,7 @@ Todas las consultas automáticas usaron el User-Agent del proyecto y una solicit
   1. La Tarea 16 completa no se recorta.
   2. En la adenda: INEGI, luego EPA motor, luego EPA combustible.
   3. El adaptador DC/Dacomsa es lo primero que se recorta.
-- **La entrega se mueve al sábado 2026-11-07:** calidad primero.
+- **La entrega se movió al sábado 2026-11-07,** para priorizar la calidad. *Actualización:* al final se entregó el viernes 2026-11-06.
 
 **Limitaciones conocidas (README):** año de venta vs. año modelo; MEX sin verificación de motor; EPA no cubre HD ni modelos solo mexicanos; INEGI empieza en 2005; "General Motors" es un grupo.
 

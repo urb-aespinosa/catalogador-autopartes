@@ -110,6 +110,15 @@ Ninguna de las tres fuentes de vehículos agrega aplicaciones: solo confirman, n
 
 ### Mercado por niveles
 
+**Por qué el mercado se define por dónde se vendió.** Al principio, el mercado se tomaba del catálogo que reporta la aplicación (D3). Pero eso describe la fuente, no el vehículo: una Silverado se vendió en los dos países, y la Cheyenne solo en México. Se descartaron otras dos opciones:
+
+- **El origen de la marca:** no dice nada de un vehículo que solo se vendió en México.
+- **El país de fabricación:** la NP300 se fabrica en México y también se exporta.
+
+Para un catálogo de refacciones importa dónde circula el vehículo, porque ahí se busca la pieza. Por eso el mercado se confirma con registros oficiales de venta: INEGI para México y EPA para EE. UU. Si no hay registro, se usa el catálogo y se marca como `según catálogo`.
+
+**El efecto:** las aplicaciones con mercado MEX pasaron de 33, todas por catálogo, a 472. De esas, 439 están confirmadas con ventas de INEGI; las otras 33 son de Fraco y Rexite, de años anteriores a 2005, y siguen como `según catálogo`.
+
 El mercado se define por dónde se vendió el vehículo (D19), por niveles y por mercado:
 
 - **MEX, nivel a, `confirmado por ventas`:** INEGI registra ventas mayores a cero de ese modelo en el mismo año calendario que el año modelo.

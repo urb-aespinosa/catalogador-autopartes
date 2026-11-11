@@ -295,8 +295,8 @@ Este proyecto se hizo con **Claude Code** (un asistente de programación con IA)
 4. **TDD estricto:** primero una prueba que falla, después el código mínimo que la pasa.
 
 **Quién hizo qué:**
-- **El desarrollador** definió el problema, tomó las decisiones D1–D22 (fuentes aceptables, qué se publica y qué no, cómo se tratan la incertidumbre y el riesgo) y revisó cada paso: las equivalencias en YAML, los reportes de filas eliminadas, cada script antes de ejecutarlo y cada solicitud a un sitio nuevo.
-- **Claude** implementó el código y las pruebas, hizo la investigación de fuentes y redactó la documentación, siempre con las decisiones registradas en `docs/DECISIONS.md`.
+- **Definición del problema y criterios de datos (responsable del proyecto):** estableció el alcance, la jerarquía de fuentes y las reglas para tratar información no corroborada; definió la comparación con el archivo de referencia y evaluó alternativas con apoyo de Claude.
+- **Implementación técnica (Claude Code):** investigó fuentes, generó el código y las pruebas, y redactó la documentación conforme a las decisiones registradas en `docs/DECISIONS.md`.
 - **La IA no se usa al ejecutar la app.** Las frases de apertura de las descripciones se redactaron con ayuda de IA durante el diseño y las revisó el desarrollador (D4); en ejecución salen de plantillas fijas.
 
 **Revisiones independientes.** Un revisor con contexto nuevo (otra instancia del modelo, sin el historial de la sesión) revisó el spec, bloques de tareas del plan original y la tarea de la adenda que elimina filas. Algunos errores importantes que se detectaron así:
